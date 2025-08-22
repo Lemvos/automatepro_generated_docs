@@ -1,6 +1,6 @@
 
 
-# --- /home/balachandra/lmws/docs/docs/system-overview.mdx ---
+# --- system-overview.mdx ---
 
 ---
 sidebar_position: 2
@@ -774,7 +774,7 @@ docker rm -f automatepro-ros-utils
 
 
 
-# --- /home/balachandra/lmws/docs/docs/release-notes.mdx ---
+# --- release-notes.mdx ---
 
 ---
 sidebar_position: 3
@@ -795,7 +795,7 @@ Stay up to date with the latest changes and improvements.
 - First official release
 - Core features implemented
 
-# --- /home/balachandra/lmws/docs/docs/quick-start-guide.mdx ---
+# --- quick-start-guide.mdx ---
 
 ---
 sidebar_position: 2
@@ -956,7 +956,7 @@ import foxgloveInstallation from './gifs/foxglove-installation.gif';
     </iframe>
 </div>
 
-# --- /home/balachandra/lmws/docs/docs/manual/io/warning-systems.mdx ---
+# --- warning-systems.mdx ---
 
 ---
 sidebar_position: 5
@@ -1118,7 +1118,7 @@ ROS package can be found [here](https://github.com/Lemvos/automatepro_tutorials)
   </TabItem>
 </Tabs>
 
-# --- /home/balachandra/lmws/docs/docs/manual/io/digital-out.mdx ---
+# --- digital-out.mdx ---
 
 ---
 sidebar_position: 3
@@ -1316,7 +1316,7 @@ ROS package can be found [here](https://github.com/Lemvos/automatepro_tutorials)
 
 
 
-# --- /home/balachandra/lmws/docs/docs/manual/io/digital-in.mdx ---
+# --- digital-in.mdx ---
 
 ---
 sidebar_position: 2
@@ -1545,7 +1545,7 @@ ROS package can be found [here](https://github.com/Lemvos/automatepro_tutorials)
 </Tabs>
 
 
-# --- /home/balachandra/lmws/docs/docs/manual/io/digital-drive-out.mdx ---
+# --- digital-drive-out.mdx ---
 
 ---
 sidebar_position: 4
@@ -1781,7 +1781,7 @@ ROS package can be found [here](https://github.com/Lemvos/automatepro_tutorials)
     </TabItem>      
 </Tabs>
 
-# --- /home/balachandra/lmws/docs/docs/manual/io/analog-in.mdx ---
+# --- analog-in.mdx ---
 
 ---
 sidebar_position: 1
@@ -2082,7 +2082,7 @@ ROS package can be found [here](https://github.com/Lemvos/automatepro_tutorials)
   </TabItem>
 </Tabs>
 
-# --- /home/balachandra/lmws/docs/docs/manual/sensors/imu.mdx ---
+# --- imu.mdx ---
 
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
@@ -2290,7 +2290,7 @@ ROS package can be found [here](https://github.com/Lemvos/automatepro_tutorials)
 </Tabs>
 
 
-# --- /home/balachandra/lmws/docs/docs/manual/sensors/gmsl2-camera.mdx ---
+# --- gmsl2-camera.mdx ---
 
 # GMSL 2 Camera
 
@@ -2447,7 +2447,7 @@ sudo systemctl start automatepro-core-driver
 ```
 
 
-# --- /home/balachandra/lmws/docs/docs/manual/sensors/gnss/position.mdx ---
+# --- position.mdx ---
 
 ---
 sidebar_position: 1
@@ -2552,7 +2552,7 @@ This is a non-standard option - contact lemvos for more information
 **Container**: [automatepro-core-driver](https://hub.docker.com/repository/docker/lemvos/automatepro_core_driver/general) 
 
 :::info
-All the configuration related files can be found at `/automatepro/config/ros` directory.  
+All the configuration related files can be found at `/opt/automatepro/config/ros` directory.  
 These files will be mounted to docker container and will be used by the ROS driver.
 Environmental variables can be set in the `/opt/automatepro/.env` file.
 :::
@@ -2697,7 +2697,7 @@ ROS package can be found [here](https://github.com/Lemvos/automatepro_tutorials)
 
 
 
-# --- /home/balachandra/lmws/docs/docs/manual/sensors/gnss/configuration.mdx ---
+# --- configuration.mdx ---
 
 ---
 sidebar_position: 4
@@ -2787,7 +2787,7 @@ The UBX Configuration window provides full access to all available settings for 
 
 
 
-# --- /home/balachandra/lmws/docs/docs/manual/sensors/gnss/heading.mdx ---
+# --- heading.mdx ---
 
 ---
 sidebar_position: 2
@@ -2884,7 +2884,7 @@ It is recommended to use `/sensor/gnss/heading/true_heading` for your applicatio
 **Container**: [automatepro-core-driver](https://hub.docker.com/repository/docker/lemvos/automatepro_core_driver/general)
 
 :::info
-All the configuration related files can be found at `/automatepro/config/ros` directory.  
+All the configuration related files can be found at `/opt/automatepro/config/ros` directory.  
 These files will be mounted to docker container and will be used by the ROS driver.
 Environmental variables can be set in the `/opt/automatepro/.env` file.
 :::
@@ -2930,7 +2930,7 @@ docker restart automatepro-core-driver
 ```
 :::
 
-# --- /home/balachandra/lmws/docs/docs/manual/sensors/gnss/correction.mdx ---
+# --- correction.mdx ---
 
 ---
 sidebar_position: 3
@@ -3039,7 +3039,7 @@ docker restart automatepro-core-driver
 :::
 
 
-# --- /home/balachandra/lmws/docs/docs/manual/misc/desktop.mdx ---
+# --- desktop.mdx ---
 
 # Desktop Environment
 
@@ -3096,7 +3096,7 @@ If you encounter issues, please contact support for further assistance. When con
 ~/.xsession-errors
 ```
 
-# --- /home/balachandra/lmws/docs/docs/manual/hardware-installation/mechanical.mdx ---
+# --- mechanical.mdx ---
 
 # Mechanical
 ## AutomatePro Installation
@@ -3165,7 +3165,7 @@ import AMP_DIN_INSTALL from './images/AMP-DIN-INSTALL.PNG'
 
 
 
-# --- /home/balachandra/lmws/docs/docs/manual/diagnostics/io-controller.mdx ---
+# --- io-controller.mdx ---
 
 ---
 sidebar_position: 2
@@ -3328,7 +3328,7 @@ import TabItem from '@theme/TabItem';
 
 
 
-# --- /home/balachandra/lmws/docs/docs/manual/diagnostics/estop.mdx ---
+# --- estop.mdx ---
 
 ---
 sidebar_position: 1
@@ -3355,7 +3355,7 @@ The E-STOP status can be read from the pin gpiochip1 25.
 
 
 
-# --- /home/balachandra/lmws/docs/docs/manual/diagnostics/flashing.mdx ---
+# --- flashing.mdx ---
 
 ---
 sidebar_position: 3
@@ -3378,7 +3378,7 @@ import AMP_Flash_INSTALL from './images/AMP-Flashing.PNG'
 **4.** Reinstall the breather vent by hand-tightening it.  
 
 
-# --- /home/balachandra/lmws/docs/docs/manual/connectivity/can-bus.mdx ---
+# --- can-bus.mdx ---
 
 # CAN Bus
 import Tabs from '@theme/Tabs';
@@ -3488,7 +3488,7 @@ Additional debugging techniques to consider:
     ```
 
 
-# --- /home/balachandra/lmws/docs/docs/manual/connectivity/wifi.mdx ---
+# --- wifi.mdx ---
 
 # Wi-Fi & Bluetooth
 import amp_wifi from './images/AutomatePro-WIFI.png'
@@ -3552,7 +3552,7 @@ If the problem persists, please contact support for further assistance. When con
 
 
 
-# --- /home/balachandra/lmws/docs/docs/manual/connectivity/eth.mdx ---
+# --- eth.mdx ---
 
 # Ethernet
 
@@ -3601,7 +3601,7 @@ The AutomatePro includes a 1GbE Ethernet port onboard this is accessible through
 </div>
 
 
-# --- /home/balachandra/lmws/docs/docs/manual/connectivity/5g.mdx ---
+# --- 5g.mdx ---
 
 # 5G 
 ## Hardware
@@ -3759,7 +3759,7 @@ sudo journalctl -u automatepro-wwan-manager
 ```
 
 
-# --- /home/balachandra/lmws/docs/docs/manual/connectivity/usb-type-c.mdx ---
+# --- usb-type-c.mdx ---
 
 # USB Type-C
 
@@ -3788,7 +3788,7 @@ In addition to connecting to peripheral systems and transferring large amounts o
 
 
 
-# --- /home/balachandra/lmws/docs/docs/manual/connectivity/rs485.mdx ---
+# --- rs485.mdx ---
 
 # RS485
 import Tabs from '@theme/Tabs';
@@ -3983,11 +3983,11 @@ int main() {
 If you are using terminal emulators such as `picocom`, toggle the RTS pin manually using the commands offered by the terminal emulator.
 
 
-# --- /home/balachandra/lmws/docs/docs/accessories/din-rail-mount.mdx ---
+# --- din-rail-mount.mdx ---
 
 # DIN Rail Mount 
 
-# --- /home/balachandra/lmws/docs/docs/accessories/antennas/rtk-gnss-antenna.mdx ---
+# --- rtk-gnss-antenna.mdx ---
 
 # RTK GNSS Antenna  - Taoglas
 
@@ -4017,7 +4017,7 @@ import RTK_GNSS_Antenna from './images/rtk-gnss-antenna.png'
 <br />
 [Device Datasheet](https://cdn.taoglas.com/datasheets/MA850.A.LBICG.001.pdf)
 
-# --- /home/balachandra/lmws/docs/docs/accessories/antennas/7in1-antenna.mdx ---
+# --- 7in1-antenna.mdx ---
 
 # 7-in-1 Combination Antenna - Taoglas
 import combo_antenna from './images/multi-antenna.png'
@@ -4052,7 +4052,7 @@ import combo_antenna from './images/multi-antenna.png'
 
 
 
-# --- /home/balachandra/lmws/docs/docs/accessories/cables-connectors/m12-rj45-cable.mdx ---
+# --- m12-rj45-cable.mdx ---
 
 # M12x to RJ45 Cable 
 
@@ -4076,7 +4076,7 @@ import M12x_Cable from './images/M12X-to-RJ45.jpg'
   </p>
 </div>
 
-# --- /home/balachandra/lmws/docs/docs/accessories/cables-connectors/fakra-z-cables.mdx ---
+# --- fakra-z-cables.mdx ---
 
 # FAKRA Type Z Camera Cables 
 
@@ -4106,7 +4106,7 @@ import FAKRA_Cable from './images/FAKRA-cable.jpg'
 
 
 
-# --- /home/balachandra/lmws/docs/docs/accessories/development-tools/breakout-board.mdx ---
+# --- breakout-board.mdx ---
 
 ---
 icon: images/breakout_board.png
@@ -4124,7 +4124,7 @@ The development board is designed to be placed directly on top of the AutomatePr
 <img src={AutomatePro_Breakout_Board} style={{width: '80%'}}/>
 
 
-# --- /home/balachandra/lmws/docs/docs/accessories/cameras/gmsl2-camera.mdx ---
+# --- gmsl2-camera.mdx ---
 
 # Sony ISX031 GMSL2 Monocular Camera
 
