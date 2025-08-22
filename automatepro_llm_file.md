@@ -1,5 +1,26 @@
 
 
+# --- release-notes.mdx ---
+
+---
+sidebar_position: 3
+---
+
+# Release Notes
+
+Stay up to date with the latest changes and improvements.
+
+## Software
+
+### Version 1.0.1
+- Added an installer to automate initial setup and streamline future updates.
+- Enhanced IO Controller with new features for flexible analog and digital input configuration.
+- Resolved minor bugs to improve overall stability and reliability.
+
+### Version 1.0.0
+- First official release
+- Core features implemented
+
 # --- system-overview.mdx ---
 
 ---
@@ -774,27 +795,6 @@ docker rm -f automatepro-ros-utils
 
 
 
-# --- release-notes.mdx ---
-
----
-sidebar_position: 3
----
-
-# Release Notes
-
-Stay up to date with the latest changes and improvements.
-
-## Software
-
-### Version 1.0.1
-- Added an installer to automate initial setup and streamline future updates.
-- Enhanced IO Controller with new features for flexible analog and digital input configuration.
-- Resolved minor bugs to improve overall stability and reliability.
-
-### Version 1.0.0
-- First official release
-- Core features implemented
-
 # --- quick-start-guide.mdx ---
 
 ---
@@ -956,365 +956,911 @@ import foxgloveInstallation from './gifs/foxglove-installation.gif';
     </iframe>
 </div>
 
-# --- warning-systems.mdx ---
+# --- 5g.mdx ---
 
----
-sidebar_position: 5
----
+# 5G 
+## Hardware
+The AutomatePro has optional 5G connectivity. To use this, an external antenna should be connected to the highlighted FAKRA D Coded (Claret Violet) connectors shown in the image below.
+### Connector Location
+![alt text](images/AutomatePro-5G.png)
 
-# Warning Systems
+### 5G Specifications
+| Parameter               | Value                                                                                           |
+|-------------------------|-------------------------------------------------------------------------------------------------|
+| Transceiver                  | RM520N-GL                                                                                       |
+| Max upload data rates   | 550Mbps (NSA) or 900Mbps (SA)                                                                   |
+| Max download data rates | 3.4Gbps (NSA) or 2.4Gbps (SA)                                                                   |
+| Frequency               | sub-6GHz                                                                                        |
+| Protocol                | 5G, LTE, WCDMA                                                                                  |
+| Coverage                | Worldwide 5G and LTE-A coverage                                                                 |
+| NSA Bands               | n1/n2/n3/n5/n7/n8/n12/n13/n14/n20/n25/n26/n28/n29<br />/n30/n38/n40/n41/n48/n66/n71/n75/n76/n77/n78/n79 |
+| SA Bands                | n1/n2/n3/n5/n7/n8/n12/n13/n14/n20/n25/n26/n28/n29<br />/n30/n38/n40/n41/n48/n66/n71/n75/n76/n77/n78/n79 |
 
-## Hardware 
+:::note
+The maximum upload and download rates are based on the manufacturer’s specifications for the 5G device. Actual performance may vary depending on the antenna used and the location of the device.
+:::
+
+### External Antenna
+The AutomatePro system is compatible with a variety of antennas. More information on compatible antennas can be found [here](/automatepro/category/antennas).
+
+### SIM Card
+For devices shipped without a SIM card, you can add one as follows:
+
+#### Installing or Removing the SIM Card
+
+import AMP_SIM_INSTALL from './images/AMP-100-AMP-ASSY-REV-A-SIM.PNG'
+
+<div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+  <img src={AMP_SIM_INSTALL} alt="automatepro-img" style={{ width: '100%' }} />
+</div>
+
+1. Ensure the device is powered off and disconnect any external connectors. It is easiest to perform this operation on a bench without the AutomatePro fixed.  
+2. Loosen and remove the eight M4x16 socket head cap screws (1).  
+3. Carefully lift the casing off from the heat sink (2).  
+4. Using tweezers, carefully install the Nano SIM. When removing, push the SIM card inwards, it will then eject itself. 
+5. Check the heat sink (4) for sufficient thermal paste.  
+6. Verify that the O-ring (3) is correctly installed and seated. 
+7. Reposition the casing onto the heat sink (2) and tighten the eight M4 cap screws. Tighten the screws in a cross-star pattern. Do not over-torque the screws.  
+
+
+
+
+## Configuration
+
+{/* ### eSIM To be added once we have a good solution
+*/}
+
+### SIM
+:::warning[Important]
+Be cautious when using AT commands. Incorrect AT commands can cause the device to malfunction.
+For more information, refer to the [manual](./resources/Quectel_RG50xQRM5xxQ_Series_AT_Commands_Manual_V1.1.pdf).
+:::
+
+Open a Serial terminal using `minicom` or any other serial terminal software to access AT Interface of the 5G module.
+```bash
+sudo minicom -D /dev/ttyUSB3
+```
+
+Run AT commands to check the SIM status
+```bash
+AT+CPIN?
+```
+
+Output:
+```bash
++CPIN: READY
+
+OK
+```
+
+If the SIM card is not ready, you will need to enter the PIN code using the following command:
+```bash
+AT+CPIN=XXXX
+```
+Replace `XXXX` with the SIM card PIN code.
+This command will unlock the SIM card temporarily, and it will be locked again after a reboot.
+
+To unlock the SIM card permanently, use the following command:
+```bash
+AT+CLCK="SC",0,"XXXX"
+```
+
+### Driver
+The 5G connection is managed by a systemd service called `automatepro-wwan-manager`. The service is enabled by default and will automatically connect to the network when the device is powered on.
+This service can be enabled, disabled, started, stopped, and restarted using the `systemctl` command.
+
+By default, the 5G connection is configured to automatically connect to the network. If you need to manually configure the 5G connection, follow the steps below.
+
+-  Start the 5G connection service (temporary start, will not persist after reboot):
+```bash
+sudo systemctl start automatepro-wwan-manager
+```
+
+-  Stop the 5G connection service (temporary stop, will restart on reboot):
+```bash
+sudo systemctl stop automatepro-wwan-manager
+```
+
+- Disable automatic connection:
+
+```bash
+sudo systemctl disable automatepro-wwan-manager
+```
+
+- Enable automatic connection:
+```bash
+sudo systemctl enable automatepro-wwan-manager
+```
+
+## Troubleshooting
+If you encounter issues connecting to 5G, try the following steps:
+
+### Verify the driver status
+```bash
+sudo systemctl status automatepro-wwan-manager
+```
+if it is not running, start the service using the following command:
+```bash
+sudo systemctl restart automatepro-wwan-manager
+```
+
+### Check the signal strength
+
+Open Serial terminal using `minicom` or any other serial terminal software to access AT Interface of the 5G module.
+```bash
+sudo minicom -D /dev/ttyUSB3
+```
+Run AT commands to check the signal strength
+```bash
+AT+CSQ
+```
+Output:
+```bash
++CSQ: <RSSI>,<ber>
+
+OK
+```
+| RSSI | dBm Level | Signal Quality  |
+|------|-----------------|--------|
+| 0    | -113 dBm or less | ▃ (Poor)|
+| 1    | -111 dBm | ▃ ▅ (Fair)|
+| 2 - 30 | -109 dBm to -53 dBm | ▃ ▅ ▇ (Good)|
+| 31   | -51 dBm or greater | ▃ ▅ ▇ ▉ (Excellent)|
+| 99   | Not known or not detectable | Signal Fault: Check Antenna Connection |
+
+If the problem persists, please contact support for further assistance. When contacting support, include the output of the following command:
+```bash
+sudo journalctl -u automatepro-wwan-manager 
+```
+
+
+# --- can-bus.mdx ---
+
+# CAN Bus
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
-import AutomatePro_DOut from './images/AutomatePro_DOut.png'
-import BreakoutBoard_DOut from '../connectivity/images/BreakoutBoard-MISC.png'
+import breakoutboard from './images/BreakoutBoard-MISC.png'
+import automatepro from './images/AutomatePro-CAN.png'
 
-Warning system outputs are configured to control standard components such as warning lights and buzzers. 
-Two drivers are allocated for the lighting system, and one driver is designated for a warning buzzer/horn. 
+## Hardware 
+One CAN FD bus is integrated into the AutomatePro with a max data rate of 8Mbs. A 120ohm termination resistor should be placed between CAN_H and CAN_L at both ends of the CAN network. 
 
+### Connector Pinout
+<Tabs>
+  <TabItem value="Connector" label="Connector" default>
+   
+    <img src={automatepro} style={{width: '100%'}}/>
+
+</TabItem>
+  <TabItem value="Development Breakout Board" label="Development Breakout Board">
+
+    <img src={breakoutboard} style={{width: '100%'}}/>
+
+  </TabItem>
+</Tabs>
+
+
+### CAN Specifications
+
+| Parameter                                | Value          |
+|------------------------------------------|----------------|
+| Transceiver                              | TCAN3413DDFR   |
+| CAN FD                                   | Yes            |
+| Max data rate                            | 8Mbps          |
+| Integrated 120ohm termination resistor | No             |
+| CAN H and L input protection | < ±58V          |
+
+
+## Software
+To utilize the network, it is necessary to configure the interface properties. For instance, to set the network 
+interface with a bus bit rate of 500 kbps, 
+use the following commands:
+```bash
+sudo ip link set can0 up type can bitrate 500000 berr-reporting on
+```
+Install CAN utilities for testing:
+```bash
+sudo apt-get install can-utils
+```
+
+This command transfers a packet to can0 with CAN ID 123 and data 'abcdabcd':
+```bash
+cansend can0 123#abcdabcd
+```
+This command receives packets from any CAN node connected to the bus:
+```bash
+candump -x any
+```
+For more information about the use of `cansend`, enter this command:
+```bash
+cansend --help
+```
+You can use other tools, such as `cangen`, for different filtering options.
+
+:::tip
+C++ and Python examples can be found [here](https://github.com/Lemvos/automatepro_tutorials/tree/master/misc).
+:::
+
+## Troubleshooting
+
+### Loopback test
+You can perform a loopback test to determine whether the controller is working.
+
+Ensure the CAN drivers are loaded. To check if the drivers are loaded use the following command:
+    ```bash
+    lsmod | grep mttcan
+    ```
+    If the drivers are not loaded, enter this command:
+    ```bash
+    sudo modprobe mttcan
+    ```
+
+To perform a loopback test, run the following commands:
+```bash  
+sudo ip link set can0 type can bitrate 500000 loopback on
+sudo ip link set can0 up
+candump can0 &
+cansend can0 123#abcdabcd
+```
+If the loopback test is successful, the last command displays this:
+
+```bash
+can0 123 [4] AB CD AB CD
+can0 123 [4] AB CD AB CD
+```
+### Other Methods
+Additional debugging techniques to consider:
+
+1. If a loopback test shows that the controller is working correctly and you are still not able to send or receive packets, 
+  try reconnecting the transceiver and confirm that the connections are correctly made.
+
+2. Check if the `mttcan` driver is loaded.
+
+3. Connect an oscilloscope to analyze the bus signal integrity and verify proper operation.
+
+4. If the device logs a `No buffer space available` message during send, enter this command to use the polling mechanism:
+    ```bash
+    cangen -L 8 can0 -p 1000
+    ```
+
+
+# --- usb-type-c.mdx ---
+
+# USB Type-C
+
+import amp_usb from './images/AutomatePro-USB.png'
+import m12x from './images/M12x.png'
+
+## Hardware
+The AutomatePro features a USB Type-C connector with ALT mode, enabling it to function as a DisplayPort for connecting external screens.
+Mating cables can be [found here](/automatepro/category/cables--connectors). 
+
+In addition to connecting to peripheral systems and transferring large amounts of data, the USB-C connector can also be used for reflashing the AutomatePro.
+
+### Connector Location
+<img src={amp_usb} style={{width: '70%'}}/>
+
+### USB  Specifications
+| Parameter        | Value                              |
+|------------------|------------------------------------|
+| Transceiver      | TUSB546-DCI                        |
+| USB Version      | 3.1 Gen 1                          |
+| Max data rate    | 5 Gbps                             |
+| Alternative Mode | Yes - Can be used as a DisplayPort |
+| Connector        | M12 USB-C - IP67                   |
+
+
+
+
+
+# --- eth.mdx ---
+
+# Ethernet
+
+import amp_lan from './images/AutomatePro-LAN.png'
+import m12x from './images/M12x.png'
+
+## Hardware
+The AutomatePro includes a 1GbE Ethernet port onboard this is accessible through a M12x connector. Ethernet cables for the M12x can be found [here](/automatepro/category/cables--connectors)
+
+### Connector Location
+<img src={amp_lan} style={{width: '50%'}}/>
+
+### Ethernet Specifications
+| Parameter        | Value          |
+|------------------|----------------|
+| Supported Speed  | 10/100/1000Mbps|
+| Connector        | M12x - IP67    |
+| PoE              | No             |
+
+### M12x Connector Pinout
+<div style={{ columnCount: 2, columnGap: '10px' }}>
+  <p>
+    <strong></strong>
+    | Pin Number | LAN Signal |
+    |------------|------------|
+    | 1          | MDI0+      |
+    | 2          | MDI0-      |
+    | 3          | MDI1+      |
+    | 4          | MDI1-      |
+    | 5          | MDI3+      |
+    | 6          | MDI3-      |
+    | 7          | MDI2-      |
+    | 8          | MDI2+      |
+
+
+
+    <strong></strong><br />
+    <br />
+    <br />
+    <br />
+    <br />
+    <br />
+    <img src={m12x} style={{width: '40%'}}/>
+   
+  </p>
+</div>
+
+
+# --- wifi.mdx ---
+
+# Wi-Fi & Bluetooth
+import amp_wifi from './images/AutomatePro-WIFI.png'
+
+## Hardware 
+To use the Wi-Fi/Bluetooth, two external antennas should be connected to the highlighted FAKRA I Coded (Beige) connectors shown in the image below.
+
+### Connector Location
+ <img src={amp_wifi} style={{width: '70%'}}/>
+
+### Wi-Fi & Bluetooth Specifications
+| Parameter          | Value                                              |
+|--------------------|----------------------------------------------------|
+| Transceiver        | AW-CB375NF                                         |
+| Frequencies        | 2.4GHz and 5GHz                                    |
+| Max data rate      | 300 Mbps (@ 2.4GHz) and 867 Mbps (@ 5GHz)          |
+| WLAN Standard      | IEEE 802.11 a/b/g/n/ac MIMO                        |
+| Bluetooth Standard | BT 5.0 standard & compatible with Bluetooth 2.1+EDR|
+
+
+## Configuration
+
+The WiFi connection can be configured using either the NMCLI (NetworkManager Command Line Interface) or Remote Desktop.
+
+### Using NMCLI
+
+1. Open a terminal(using SSH or serial) on the AutomatePro device.
+2. List the available WiFi networks to ensure the desired network is available:
+   ```bash
+   sudo nmcli dev wifi list
+   ```
+3. Connect to your desired WiFi network:
+   ```bash
+   sudo nmcli dev wifi connect "YOUR_SSID" password "YOUR_PASSWORD"
+   ```
+4. Verify the connection:
+   ```bash
+   nmcli dev status
+   ```
+   Ensure that the WiFi device shows as connected.
+   ```bash
+   DEVICE         TYPE      STATE         CONNECTION 
+   wlan0          wifi      connected     `your_wifi_network`          
+   ```
+## Troubleshooting
+If you encounter issues connecting to WiFi, try the following steps:
+
+- Ensure that the antennas are securely connected to the FAKRA connectors.
+- Verify that the WiFi network credentials (SSID and password) are correct.
+- If the issue persists, restart the NetworkManager service and try connecting again.
+   ```bash
+   sudo systemctl restart NetworkManager
+   ```
+
+If the problem persists, please contact support for further assistance. When contacting support, include the output of the following command:
+   ```bash
+   sudo journalctl -u NetworkManager
+   ```
+
+
+
+
+
+# --- rs485.mdx ---
+
+# RS485
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+import AutomatePro_RS485 from './images/AutomatePro-RS485.png'
+import BreakoutBoard_MISC from './images/BreakoutBoard-MISC.png'
+
+## Hardware 
+One RS485/RS422 bus is integrated into the AutomatePro with a max data rate of 500kbps. A 120ohm termination resistor should be placed between RS485P and RS485N at both ends of the RS485 network.
+
+
+
+###  Connector Pinout
+<Tabs>
+  <TabItem value="Connector" label="Connector" default>
+   
+    <img src={AutomatePro_RS485} style={{width: '100%'}}/>
+
+</TabItem>
+  <TabItem value="Development Breakout Board" label="Development Breakout Board">
+
+    <img src={BreakoutBoard_MISC} style={{width: '100%'}}/>
+
+  </TabItem>
+</Tabs>
+
+### RS485 Specifications
+| Parameter       | Value         |
+|-----------------|---------------|
+| Transceiver     | THVD1400DR    |
+| Data Rate       | 500 kbps      |
+| RS485 Standard  | TIA/EIA-485A  |
+| Duplex          | Half          |
+
+## Software
+
+#### Serial Port 
+`/dev/ttyTHS1` is the serial port used for RS485 communication. `RTS` pin is used to control the direction of the transceiver. 
+`RTS` is inverted and active low, `RTS` high enables the receiver and  `RTS` low enables the transmitter.
+
+## Example
+
+<Tabs>
+  <TabItem value="Python" label="Python" default>
+    ```Python
+      import serial
+      import serial.rs485
+      import time
+      
+      # Configure the serial connections
+      ser = serial.rs485.RS485(
+          port='/dev/ttyTHS1',
+          baudrate=115200,            # Set your baud rate
+          parity=serial.PARITY_NONE,
+          stopbits=serial.STOPBITS_ONE,
+          bytesize=serial.EIGHTBITS,
+          timeout=0.1                 # Timeout for read operations
+      )
+      
+      ser.rs485_mode = serial.rs485.RS485Settings(
+        rts_level_for_tx=False,
+        rts_level_for_rx=True,
+        )
+      def send_data(data):
+          ser.write(data.encode())
+          print("Sent:", data)
+
+      def receive_data():
+          incoming_data = ser.read(100)  # Read up to 100 bytes or until timeout
+          if incoming_data:
+              print("Received:", incoming_data.decode())  # Decode bytes to string
+
+      if __name__ == '__main__':
+          try:
+              while True:
+                  send_data("Hello RS485")
+                  time.sleep(1)  # Wait a bit for a response
+                  receive_data()
+          except Exception as e:
+              print("An error occurred:", str(e))
+          finally:
+              ser.close()  # Always close the serial port
+    ```
+  </TabItem>
+
+  <TabItem value="C++" label="C++">
+  ```cpp
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <errno.h>
+#include <termios.h>
+#include <sys/ioctl.h>
+#include <linux/serial.h>
+
+int setup_serial(const char* device, int speed) {
+    int fd = open(device, O_RDWR | O_NOCTTY | O_SYNC);
+    if (fd < 0) {
+        perror("Error opening serial port");
+        return -1;
+    }
+
+    struct termios tty;
+    memset(&tty, 0, sizeof tty);
+    if (tcgetattr(fd, &tty) != 0) {
+        perror("Error from tcgetattr");
+        close(fd);
+        return -1;
+    }
+
+    cfsetospeed(&tty, speed);
+    cfsetispeed(&tty, speed);
+
+    tty.c_cflag |= (CLOCAL | CREAD);    // Ignore modem controls, enable reading
+    tty.c_cflag &= ~CSIZE;
+    tty.c_cflag |= CS8;                 // 8-bit characters
+    tty.c_cflag &= ~PARENB;             // No parity bit
+    tty.c_cflag &= ~CSTOPB;             // 1 stop bit
+    tty.c_cflag &= ~CRTSCTS;            // No hardware flow control
+
+    tty.c_iflag &= ~(IXON | IXOFF | IXANY); // Turn off s/w flow ctrl
+    tty.c_lflag &= ~(ICANON | ECHO | ECHOE | ISIG); // Disable canonical mode, echo, and signal chars
+    tty.c_oflag &= ~OPOST; // Prevent special interpretation of output bytes (e.g., newline chars)
+    tty.c_cc[VMIN]  = 0;   // Non-blocking read
+    tty.c_cc[VTIME] = 20;  // 2 seconds read timeout
+
+    if (tcsetattr(fd, TCSANOW, &tty) != 0) {
+        perror("Error from tcsetattr");
+        close(fd);
+        return -1;
+    }
+
+    return fd;
+}
+
+void set_rts(int fd, int level) {
+    int status;
+    ioctl(fd, TIOCMGET, &status);  // Get the current status of the modem lines
+    if (level)
+        status |= TIOCM_RTS;  // Set RTS high
+    else
+        status &= ~TIOCM_RTS; // Set RTS low
+    ioctl(fd, TIOCMSET, &status);
+}
+
+void send_data(int fd, const char* data) {
+    set_rts(fd, 0);  // Set RTS low to send
+    write(fd, data, strlen(data)); // Send data
+    printf("Sent: %s\n", data);
+    set_rts(fd, 1);  // Set RTS high after sending
+}
+
+void receive_data(int fd) {
+    char buf[100];
+    int n = read(fd, buf, sizeof(buf)-1);
+    if (n > 0) {
+        buf[n] = '\0';
+        printf("Received: %s\n", buf);
+    }
+}
+
+int main() {
+    int fd = setup_serial("/dev/ttyTHS1", B9600);
+    if (fd < 0) {
+        exit(EXIT_FAILURE);
+    }
+
+    while (1) {
+        send_data(fd, "Hello RS485");
+        sleep(1); // Wait a bit for a response
+        receive_data(fd);
+        sleep(1);
+    }
+
+    close(fd); // Always close the serial port
+    return 0;
+}
+
+  ```
+  </TabItem>
+</Tabs>
+
+
+## Troubleshooting
+
+- **No data is being sent or received**: Check the wiring and termination resistors. Check the user permissions and serial port parameters such as baudrate, etc.
+- **Data is being sent but not received**: Check whether the RTS pin is toggled correctly. RTS should be high to receive data.
+- **Data is being received but not sent**: Check whether the RTS pin is toggled correctly. RTS should be low to send data.
+
+If you are using terminal emulators such as `picocom`, toggle the RTS pin manually using the commands offered by the terminal emulator.
+
+
+# --- analog-in.mdx ---
+
+---
+sidebar_position: 1
+---
+# Analog In
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+import AutomatePro_AIN from './images/AutomatePro_AnalogINs.png'
+import BreakoutBoard_AIN from './images/Breakout_Board_Analog_Ins.png'
+
+## Hardware 
+The AutomatePro comes with 14x Analog inputs for measuring a range of different analog sensors types, such as automotive or industral sensors.
 ###  Connector Pinout
 
 <Tabs>
   <TabItem value="Connector" label="Connector" default>
    
-    <img src={AutomatePro_DOut} style={{width: '100%'}}/>
+    <img src={AutomatePro_AIN} style={{width: '100%'}}/>
 
 </TabItem>
   <TabItem value="Development Breakout Board" label="Development Breakout Board">
 
-    <img src={BreakoutBoard_DOut} style={{width: '100%'}}/>
+    <img src={BreakoutBoard_AIN} style={{width: '100%'}}/>
 
   </TabItem>
 </Tabs>
 
-import WarningLight from './images/Warning_System.svg';
-import WarningBuzzer from './images/Warning_Buzzer.svg';
-
-    <strong></strong><br />
-### Warning Systems Specifications
-<div style={{ columnCount:3, columnGap: '20px' }}>
-  <p>
-    <strong></strong><br />
-    | Parameter       | Value         |
-    |-----------------|---------------|
-    | Onstate     | Sinks up to 24V |
-    | Drive Current      | 2A  |
-    | Controllability  | ON/OFF  |
-    | Number of Sinks | 3          |
-
-    <strong></strong><br />
-<WarningBuzzer style={{width: 'auto', height: '270px', paddingTop: '20px'}} />
-  <WarningLight style={{width: 'auto', height: '340px',paddingBottom: '10px'}}/> 
-
-  </p>
-</div>
-<br />
+### Analog Input Specifications
+| Parameter       | Value         |
+|-----------------|---------------|
+| Voltage Input Range       | 0-10V (optional 4-20mA input or integrated automotive 5V pullup on request)      |
+| Sample Rate  | 30Hz  |
+| Measurement Resolution | 2.4414mV/increment (12bit)  |
+| Number of Inputs        | 14          |
 
 
 ## ROS API
 
-### Subscribers
+### Publishers
 
 |Topic | Type | Description  |
 |---------|---------|---------|
-|`/io/warning_system_out` | [`automatepro_interfaces/msg/WarningSystems`](https://github.com/Lemvos/automatepro_interfaces/blob/master/msg/WarningSystems.msg) | Publish the desired states for the warning system to this topic. <br/> <br/>  Inputs:<br/> `warning_system_id`: <br/> DataType: `uint8` <br/> _(Use ENUM constants defined in msg definition. Options `WarningSystems.WARNING_BUZZER`, `WarningSystems.WARNING_LIGHT1`, `WarningSystems.WARNING_LIGHT_2`)_ <br/> <br/> `state`: <br/> DataType: `bool` <br/> _(Use ENUM constants defined in msg definiton. Options `WarningSystems.ON`, `WarningSystems.OFF`)_ <br/> <br/> Response Rate: `200 ms` |
+|`/io/ain` | [`automatepro_interfaces/msg/AnalogIn`](https://github.com/Lemvos/automatepro_interfaces/blob/master/msg/AnalogIn.msg) | Contains the states of the analog inputs. AutomatePro supports 14 analog input pins. Each input pin is referred to as `ain_XX`, where `XX` is the pin number, ranging from `01` to `14`. <br/> <br/> Input Pins: `ain_01 - ain_14` <br/> DataType: `int16` <br/> Unit: `user-defined` (default: `mV`) <br/> Min: `-32768` <br/> Max: `32768` <br/> Sample Rate: `30Hz` |
 
+:::tip 
+Each message includes a timestamp in the header, indicating when the IO-Controller collected the data. 
+It is recommended to use this timestamp for any time-sensitive data processing, as it ensures that transport 
+delays are accounted for, providing accurate timing for downstream operations.
+:::
 
-## Example
+## Configuration
+Analog input channels can be configured with gain, offset, and filter parameters via the IO Config service for precise scaling, calibration, and signal smoothing.
+:::info
+**Default Configuration:**  
+Unless reconfigured, all analog inputs use the following defaults:
+- **Gain:** 1.0  
+- **Offset:** 0.0  
+- **Filter Coefficient:** 1.0 (no filtering)
 
-Example code snippet toggles the Warning Buzzer ON/OFF by publishing to the `/io/warning_system_out` topic.  
-ROS package can be found [here](https://github.com/Lemvos/automatepro_tutorials).
+Raw millivolt (mV) values are published without any signal processing applied.
+:::
+
+### Services
+
+|Service | Type | Description  |
+|---------|---------|---------|
+|`/io/config` | [`automatepro_interfaces/srv/IOConfig`](https://github.com/Lemvos/automatepro_interfaces/blob/master/srv/IOConfig.srv) | Configure analog input parameters including gain, offset, and exponential moving average filter. <br/> <br/> **Request Parameters:** <br/> `key`: <br/> DataType: `uint16` <br/> Key associated with the value to be changed (0-65535) <br/> `value`: <br/> DataType: `float32` <br/> Corresponding value for the key <br/> `flag`: <br/> DataType: `uint8` <br/> Flags (0-255) <br/> <br/> **Response Parameters:** <br/> `ret_code`: <br/> DataType: `uint16` <br/> Return code from MCU (0-65535) <br/> `ret_value`: <br/> DataType: `float32` <br/> Returns the set value if successful |
+
+### Configuration Keys
+
+The analog input configuration uses keys in the format `1XXY` where:
+- `XX` is the analog input index (01-14)
+- `Y` is the parameter type:
+  - `0` for gain (m)
+  - `1` for offset (c)
+  - `2` for exponential moving average filter
+
+#### Configuration Parameters
+
+**Set Gain (m):**
+- Key: `1XX0` where XX is the AIN index (01-14)
+- Value: Desired gain value as float
+- Example: Key `1010` sets gain for AIN_01
+
+**Set Offset (c):**
+- Key: `1XX1` where XX is the AIN index (01-14)
+- Value: Desired offset value as float
+- Example: Key `1011` sets offset for AIN_01
+
+**Set Exponential Moving Average Filter:**
+- Key: `1XX2` where XX is the AIN index (01-14)
+- Value: Filter coefficient (0.0 - 1.0)
+  - `1.0` = No filtering
+  - Lower values = More filtering (slower response)
+- Example: Key `1012` sets filter for AIN_01
+
+:::tip[**Signal Processing Formula**]
+
+1. **Scaling and Calibration:**
+   ```
+   Scaled_Value = (Raw_Value × Gain) + Offset
+   ```
+
+2. **Exponential Moving Average Filter:**
+   ```
+   Final_Value = Previous_Value × (1 - α) + Scaled_Value × α
+   ```
+   Where `α` (alpha) is the filter coefficient (0.0 - 1.0)
+:::
+
+:::warning
+The final calculated value `(Raw_Value * Gain) + Offset` must not exceed the `int16` range (-32768 to 32768).  
+Results outside this range will be clamped.
+:::
+### Configuration Example
 
 <Tabs>
-  <TabItem value="Python" label="Python" default>
-    ```Python
+  <TabItem value="CLI" label="CLI">
+    ```bash
+    # Set gain for AIN_01 to 2.0
+    ros2 service call /io/config automatepro_interfaces/srv/IOConfig "{key: 1010, value: 2.0, flag: 0}"
+    
+    # Set offset for AIN_01 to 100.0
+    ros2 service call /io/config automatepro_interfaces/srv/IOConfig "{key: 1011, value: 100.0, flag: 0}"
+    
+    # Set filter coefficient for AIN_01 to 0.9
+    ros2 service call /io/config automatepro_interfaces/srv/IOConfig "{key: 1012, value: 0.9, flag: 0}"
+    ```
+  </TabItem>
+  {/* <TabItem value="Python" label="Python" default>
+    ```python
     import rclpy
     from rclpy.node import Node
-    from automatepro_interfaces.msg import WarningSystems
+    from automatepro_interfaces.srv import IOConfig
 
-    class WarningSystemsPublisher(Node):
-
+    class AINConfigNode(Node):
         def __init__(self):
-            super().__init__('warning_systems_publisher')
-            self.publisher_ = self.create_publisher(WarningSystems, '/io/warning_system_out', 10)
-            self.timer = self.create_timer(1.0, self.timer_callback)  # 1s
-            self.state = False
+            super().__init__('ain_config_node')
+            self.client = self.create_client(IOConfig, '/io/config')
+            
+        def configure_ain(self, ain_index, gain=None, offset=None, filter_coeff=None):
+            """Configure analog input parameters
+            
+            Args:
+                ain_index (int): AIN index (1-14)
+                gain (float, optional): Gain value
+                offset (float, optional): Offset value  
+                filter_coeff (float, optional): Filter coefficient (0.0-1.0)
+            """
+            if not self.client.wait_for_service(timeout_sec=1.0):
+                self.get_logger().error('IO config service not available')
+                return
+                
+            # Set gain
+            if gain is not None:
+                key = 1000 + (ain_index * 10) + 0  # 1XX0 format
+                self._call_service(key, gain, "gain")
+                
+            # Set offset
+            if offset is not None:
+                key = 1000 + (ain_index * 10) + 1  # 1XX1 format
+                self._call_service(key, offset, "offset")
+                
+            # Set filter
+            if filter_coeff is not None:
+                key = 1000 + (ain_index * 10) + 2  # 1XX2 format
+                self._call_service(key, filter_coeff, "filter")
+                
+        def _call_service(self, key, value, param_name):
+            request = IOConfig.Request()
+            request.key = key
+            request.value = value
+            request.flag = 0
+            
+            future = self.client.call_async(request)
+            rclpy.spin_until_future_complete(self, future)
+            
+            response = future.result()
+            if response.ret_code == 0:
+                self.get_logger().info(f'Successfully set {param_name} to {response.ret_value}')
+            else:
+                self.get_logger().error(f'Failed to set {param_name}, return code: {response.ret_code}')
 
-        def timer_callback(self):
-            msg = WarningSystems()
-            msg.warning_system_id = WarningSystems.WARNING_BUZZER
-            msg.state = self.state
-            self.publisher_.publish(msg)
-            self.get_logger().info(
-                'Publishing WarningSystems: warning_system_id=%d, state=%d' %
-                (msg.warning_system_id, msg.state))
-            self.state = not self.state # Toggle state
-
-    def main(args=None):
-        rclpy.init(args=args)
-        node = WarningSystemsPublisher()
-        rclpy.spin(node)
+    def main():
+        rclpy.init()
+        node = AINConfigNode()
+        
+        # Example: Configure AIN_01 with gain=2.0, offset=100.0, filter=0.9
+        node.configure_ain(ain_index=1, gain=2.0, offset=100.0, filter_coeff=0.9)
+        
         node.destroy_node()
         rclpy.shutdown()
 
     if __name__ == '__main__':
         main()
     ```
-    Run the node using the following command:
-
-    ```bash
-    ros2 run automatepro_python_tutorials warning_system_out_node 
-    ```
-  </TabItem>
-  <TabItem value="C++" label="C++">
-    ```cpp
-    #include <rclcpp/rclcpp.hpp>
-    #include <automatepro_interfaces/msg/warning_systems.hpp>
-
-    class WarningSystemsPublisher : public rclcpp::Node
-    {
-    public:
-        WarningSystemsPublisher()
-            : Node("warning_systems_publisher"), state_(false)
-        {
-            publisher_ = this->create_publisher<automatepro_interfaces::msg::WarningSystems>("/io/warning_system_out", 10);
-            timer_ = this->create_wall_timer(
-                std::chrono::seconds(1),
-                std::bind(&WarningSystemsPublisher::timer_callback, this));
-        }
-
-    private:
-        void timer_callback()
-        {
-            auto msg = automatepro_interfaces::msg::WarningSystems();
-            msg.warning_system_id = automatepro_interfaces::msg::WarningSystems::WARNING_BUZZER;  // Change to WARNING_LIGHT1 or WARNING_LIGHT2 as needed
-            msg.state = state_;
-            publisher_->publish(msg);
-            RCLCPP_INFO(this->get_logger(), "Publishing WarningSystems: warning_system_id=%d, state=%d",
-                        msg.warning_system_id, msg.state);
-            state_ = !state_;  // Toggle state
-        }
-
-        rclcpp::Publisher<automatepro_interfaces::msg::WarningSystems>::SharedPtr publisher_;
-        rclcpp::TimerBase::SharedPtr timer_;
-        bool state_;
-    };
-
-    int main(int argc, char *argv[])
-    {
-        rclcpp::init(argc, argv);
-        rclcpp::spin(std::make_shared<WarningSystemsPublisher>());
-        rclcpp::shutdown();
-        return 0;
-    }
-
-    ```
-    Run the node using the following command:
-
-    ```bash
-    ros2 run automatepro_cpp_tutorials warning_system_out_node 
-    ```
-  </TabItem>
+  </TabItem> */}
 </Tabs>
-
-# --- digital-out.mdx ---
-
----
-sidebar_position: 3
----
-
-# Digital Out
-
-## Hardware 
-import Tabs from '@theme/Tabs';
-import TabItem from '@theme/TabItem';
-import AutomatePro_DOut from './images/AutomatePro_DOut.png'
-import BreakoutBoard_DOut from './images/Breakout_Board_Digital_Outs.png'
-
-
-The AutomatePro comes with 12x digital outputs for controlling external systems from small solenoids to LEDs or small DC motors. 
-There are two different digital outputs available, one is setup as a highside output (DO_H_0x) which PWMs the onboard 12V as an output. 
-The second is a Lowside sink (DO_L_0x) which sinks upto 36V with the first four being PWM controllable and 
-
-###  Connector Pinout
-
-<Tabs>
-  <TabItem value="Connector" label="Connector" default>
-   
-    <img src={AutomatePro_DOut} style={{width: '100%'}}/>
-
-</TabItem>
-  <TabItem value="Development Breakout Board" label="Development Breakout Board">
-
-    <img src={BreakoutBoard_DOut} style={{width: '100%'}}/>
-
-  </TabItem>
-</Tabs>
-
-import DOx_Highside from './images/DO_H_x.svg';
-import DOx_Lowside from './images/DO_L_x.svg';
-
-### Digital Output Highside (DO_H_x) Specifications
-There are 6x highside digital outputs with all 6 being PWM controllable switches.
-<div style={{ columnCount: 2, columnGap: '20px' }}>
-  <p>
-    <strong></strong><br />
-    | Parameter       | Value         |
-    |-----------------|---------------|
-    | Output Voltage (Onstate)     | +12V (from on-board 12V)  |
-    | Drive Current      | 500mA  |
-    | PWM Controllable  | All (DO_H_01 - DO_H_06)  |
-    | PWM Switching Frequency  | 500Hz  |
-    | Number of Outputs        | 6          |
-
-    <strong></strong><br />
-  <DOx_Highside style={{width: '400px', height: 'auto'}}/> 
-   
-  </p>
-</div>
-<br />
-
-### Digital Output Lowside (DO_L_x) Specifications
-There are 6x lowside digital outputs the first four are PWM controllable while the final two are binary on/off switches.
-<div style={{ columnCount: 2, columnGap: '20px' }}>
-  <p>
-    <strong></strong><br />
-    | Parameter       | Value         |
-    |-----------------|---------------|
-    | Onstate     | Sinks up to 36V |
-    | Drive Current      |  500mA |
-    | PWM Controllable  | DO_L_01 <br/>DO_L_02 <br/>DO_L_03 <br/>DO_L_04 <br/> *DO_L_05 & DO_L_06 are On/Off switches*|
-    | PWM Switching Frequency  | 10Hz  |
-    | Number of Inputs        | 6          |
-
-    <strong></strong><br />
-  <DOx_Lowside style={{width: '400px', height: 'auto'}}/> 
-   
-  </p>
-</div>
-<br />
-
-## ROS API
-
-### Subscribers
-
-|Topic | Type | Description  |
-|---------|---------|---------|
-|`/io/digital_out` | [`automatepro_interfaces/msg/DigitalOut`](https://github.com/Lemvos/automatepro_interfaces/blob/master/msg/DigitalOut.msg) | Publish the desired digital out states to this topic. AutomatePro supports 12 digital out pins (6 High Side and 6 Low Side). Each input pin is referred to as `DIGITAL_OUT_H_XX` or `DIGITAL_OUT_L_XX`, where `H/L` refer to `High Side/Low Side`, `XX` is the pin number, ranging from `01` to `06`. <br/> <br/> `d_out_pin_id`: <br/> DataType: `uint8` <br/> (Use ENUM constants defined in msg definiton.  `DigitalOut.DIGITAL_OUT_H_XX`: `01-06` <br/> `DigitalOut.DIGITAL_OUT_L_XX`: `01-06`) <br/> <br/> `duty_cycle_percent`: <br/> DataType: `uint8` <br/> Min: `0` in percentage `%` <br/> Max: `100` in percentage `%`<br/> <br/> Response Rate: `200 ms` |
-
 
 ## Example
 
-Example code snippet toggles the duty cycle of Digital Out 01 by publishing to the `/io/digital_out` topic.  
-ROS package can be found [here](https://github.com/Lemvos/automatepro_tutorials).
+Example code snippet prints the states of the analog inputs by subscribing to the `/io/ain` topic.
+ROS package can be found [here](https://github.com/Lemvos/automatepro_tutorials).  
 
 <Tabs>
   <TabItem value="Python" label="Python" default>
     ```Python
     import rclpy
     from rclpy.node import Node
-    from automatepro_interfaces.msg import DigitalOut
-
-    class DigitalOutPublisher(Node):
-
+    from automatepro_interfaces.msg import AnalogIn
+    
+    class AnalogInSubscriber(Node):
+    
         def __init__(self):
-            super().__init__('digital_out_publisher')
-            self.publisher_ = self.create_publisher(DigitalOut, '/io/digital_out', 10)
-            self.timer = self.create_timer(1.0, self.timer_callback)  # 1s
-            self.duty_cycle_sequence = [0, 50, 100, 50]
-            self.sequence_index = 0
-
-        def timer_callback(self):
-            msg = DigitalOut()
-            msg.d_out_pin_id = DigitalOut.DIGITAL_OUT_H_01 # Digital Out High Side Pin 01
-            msg.duty_cycle_percent = self.duty_cycle_sequence[self.sequence_index] # Duty Cycle:  0%, 50%, 100%, 50%
-                                                                                   # 0% - OFF, 100% - ON 
-            self.publisher_.publish(msg)
-            self.get_logger().info('Publishing: "%s"' % msg)
-            self.sequence_index = (self.sequence_index + 1) % len(self.duty_cycle_sequence)
-
+            super().__init__('analog_in_subscriber')
+            self.subscription = self.create_subscription(
+                AnalogIn,
+                '/io/analog_in',
+                self.subscriber_callback,
+                10)
+    
+        def subscriber_callback(self, msg):
+            self.get_logger().info(
+                f'Received AnalogIn message:\n'
+                f'AIN_01: {msg.ain_01}\nAIN_02: {msg.ain_02}\nAIN_03: {msg.ain_03}\n'
+                f'AIN_04: {msg.ain_04}\nAIN_05: {msg.ain_05}\nAIN_06: {msg.ain_06}\n'
+                f'AIN_07: {msg.ain_07}\nAIN_08: {msg.ain_08}\nAIN_09: {msg.ain_09}\n'
+                f'AIN_10: {msg.ain_10}\nAIN_11: {msg.ain_11}\nAIN_12: {msg.ain_12}\n'
+                f'AIN_13: {msg.ain_13}\nAIN_14: {msg.ain_14}'
+            )
+    
     def main(args=None):
         rclpy.init(args=args)
-        node = DigitalOutPublisher()
+        node = AnalogInSubscriber()
         rclpy.spin(node)
         node.destroy_node()
         rclpy.shutdown()
     
     if __name__ == '__main__':
         main()
-
     ```
     Run the node using the following command:
 
     ```bash
-    ros2 run automatepro_python_tutorials digital_out_node
+    ros2 run automatepro_python_tutorials analog_in_node
     ```
 
-  </TabItem>
-  <TabItem value="C++" label="C++">
+    </TabItem>
+      <TabItem value="C++" label="C++">
     ```cpp
-    #include <vector>
     #include <rclcpp/rclcpp.hpp>
-    #include <automatepro_interfaces/msg/digital_out.hpp>
-
-    class DigitalOutPublisher : public rclcpp::Node
+    #include <automatepro_interfaces/msg/analog_in.hpp>
+    
+    class AnalogInSubscriber : public rclcpp::Node
     {
     public:
-        DigitalOutPublisher()
-            : Node("digital_out_publisher"),
-              duty_cycle_sequence_{0, 50, 100, 50},
-              sequence_index_(0)
+        AnalogInSubscriber()
+            : Node("analog_in_subscriber")
         {
-            publisher_ = this->create_publisher<automatepro_interfaces::msg::DigitalOut>("/io/digital_out", 10);
-            timer_ = this->create_wall_timer(
-                std::chrono::seconds(1),
-                std::bind(&DigitalOutPublisher::timer_callback, this));
+            subscription_ = this->create_subscription<automatepro_interfaces::msg::AnalogIn>(
+                "/io/analog_in", 10,
+                std::bind(&AnalogInSubscriber::listener_callback, this, std::placeholders::_1));
         }
-
+    
     private:
-        void timer_callback()
+        void listener_callback(const automatepro_interfaces::msg::AnalogIn::SharedPtr msg) const
         {
-            auto msg = automatepro_interfaces::msg::DigitalOut();
-            msg.d_out_pin_id = automatepro_interfaces::msg::DigitalOut::DIGITAL_OUT_H_01; // Digital Out High Side Pin 01
-            msg.duty_cycle_percent = duty_cycle_sequence_[sequence_index_]; // Duty Cycle: 0%, 50%, 100%, 50%
-                                                                            // 0% - OFF, 100% - ON
-            publisher_->publish(msg);
-            RCLCPP_INFO(this->get_logger(), "Publishing: d_out_pin_id=%d, duty_cycle_percent=%d", msg.d_out_pin_id, msg.duty_cycle_percent);
-
-            // Update the sequence index
-            sequence_index_ = (sequence_index_ + 1) % duty_cycle_sequence_.size();
+            RCLCPP_INFO(this->get_logger(), 
+                "Received AnalogIn message:\n"
+                "AIN_01: %u\nAIN_02: %u\nAIN_03: %u\n"
+                "AIN_04: %u\nAIN_05: %u\nAIN_06: %u\n"
+                "AIN_07: %u\nAIN_08: %u\nAIN_09: %u\n"
+                "AIN_10: %u\nAIN_11: %u\nAIN_12: %u\n"
+                "AIN_13: %u\nAIN_14: %u",
+                msg->ain_01, msg->ain_02, msg->ain_03,
+                msg->ain_04, msg->ain_05, msg->ain_06,
+                msg->ain_07, msg->ain_08, msg->ain_09,
+                msg->ain_10, msg->ain_11, msg->ain_12,
+                msg->ain_13, msg->ain_14);
         }
-
-        rclcpp::Publisher<automatepro_interfaces::msg::DigitalOut>::SharedPtr publisher_;
-        rclcpp::TimerBase::SharedPtr timer_;
-        std::vector<int> duty_cycle_sequence_;
-        size_t sequence_index_;
+    
+        rclcpp::Subscription<automatepro_interfaces::msg::AnalogIn>::SharedPtr subscription_;
     };
-
+    
     int main(int argc, char *argv[])
     {
         rclcpp::init(argc, argv);
-        rclcpp::spin(std::make_shared<DigitalOutPublisher>());
+        rclcpp::spin(std::make_shared<AnalogInSubscriber>());
         rclcpp::shutdown();
         return 0;
     }
-
     ```
     Run the node using the following command:
 
     ```bash
-    ros2 run automatepro_cpp_tutorials digital_out_node    
+    ros2 run automatepro_cpp_tutorials analog_in_node    
     ```
-
-    :::warning[Important]
-    It would be good to have a service that can change pin number and duty cycle instead of changing it from the code.
-    :::
-
   </TabItem>
 </Tabs>
-
-
 
 # --- digital-in.mdx ---
 
@@ -1781,295 +2327,564 @@ ROS package can be found [here](https://github.com/Lemvos/automatepro_tutorials)
     </TabItem>      
 </Tabs>
 
-# --- analog-in.mdx ---
+# --- digital-out.mdx ---
 
 ---
-sidebar_position: 1
+sidebar_position: 3
 ---
-# Analog In
-import Tabs from '@theme/Tabs';
-import TabItem from '@theme/TabItem';
-import AutomatePro_AIN from './images/AutomatePro_AnalogINs.png'
-import BreakoutBoard_AIN from './images/Breakout_Board_Analog_Ins.png'
+
+# Digital Out
 
 ## Hardware 
-The AutomatePro comes with 14x Analog inputs for measuring a range of different analog sensors types, such as automotive or industral sensors.
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+import AutomatePro_DOut from './images/AutomatePro_DOut.png'
+import BreakoutBoard_DOut from './images/Breakout_Board_Digital_Outs.png'
+
+
+The AutomatePro comes with 12x digital outputs for controlling external systems from small solenoids to LEDs or small DC motors. 
+There are two different digital outputs available, one is setup as a highside output (DO_H_0x) which PWMs the onboard 12V as an output. 
+The second is a Lowside sink (DO_L_0x) which sinks upto 36V with the first four being PWM controllable and 
+
 ###  Connector Pinout
 
 <Tabs>
   <TabItem value="Connector" label="Connector" default>
    
-    <img src={AutomatePro_AIN} style={{width: '100%'}}/>
+    <img src={AutomatePro_DOut} style={{width: '100%'}}/>
 
 </TabItem>
   <TabItem value="Development Breakout Board" label="Development Breakout Board">
 
-    <img src={BreakoutBoard_AIN} style={{width: '100%'}}/>
+    <img src={BreakoutBoard_DOut} style={{width: '100%'}}/>
 
   </TabItem>
 </Tabs>
 
-### Analog Input Specifications
-| Parameter       | Value         |
-|-----------------|---------------|
-| Voltage Input Range       | 0-10V (optional 4-20mA input or integrated automotive 5V pullup on request)      |
-| Sample Rate  | 30Hz  |
-| Measurement Resolution | 2.4414mV/increment (12bit)  |
-| Number of Inputs        | 14          |
+import DOx_Highside from './images/DO_H_x.svg';
+import DOx_Lowside from './images/DO_L_x.svg';
 
+### Digital Output Highside (DO_H_x) Specifications
+There are 6x highside digital outputs with all 6 being PWM controllable switches.
+<div style={{ columnCount: 2, columnGap: '20px' }}>
+  <p>
+    <strong></strong><br />
+    | Parameter       | Value         |
+    |-----------------|---------------|
+    | Output Voltage (Onstate)     | +12V (from on-board 12V)  |
+    | Drive Current      | 500mA  |
+    | PWM Controllable  | All (DO_H_01 - DO_H_06)  |
+    | PWM Switching Frequency  | 500Hz  |
+    | Number of Outputs        | 6          |
+
+    <strong></strong><br />
+  <DOx_Highside style={{width: '400px', height: 'auto'}}/> 
+   
+  </p>
+</div>
+<br />
+
+### Digital Output Lowside (DO_L_x) Specifications
+There are 6x lowside digital outputs the first four are PWM controllable while the final two are binary on/off switches.
+<div style={{ columnCount: 2, columnGap: '20px' }}>
+  <p>
+    <strong></strong><br />
+    | Parameter       | Value         |
+    |-----------------|---------------|
+    | Onstate     | Sinks up to 36V |
+    | Drive Current      |  500mA |
+    | PWM Controllable  | DO_L_01 <br/>DO_L_02 <br/>DO_L_03 <br/>DO_L_04 <br/> *DO_L_05 & DO_L_06 are On/Off switches*|
+    | PWM Switching Frequency  | 10Hz  |
+    | Number of Inputs        | 6          |
+
+    <strong></strong><br />
+  <DOx_Lowside style={{width: '400px', height: 'auto'}}/> 
+   
+  </p>
+</div>
+<br />
 
 ## ROS API
 
-### Publishers
+### Subscribers
 
 |Topic | Type | Description  |
 |---------|---------|---------|
-|`/io/ain` | [`automatepro_interfaces/msg/AnalogIn`](https://github.com/Lemvos/automatepro_interfaces/blob/master/msg/AnalogIn.msg) | Contains the states of the analog inputs. AutomatePro supports 14 analog input pins. Each input pin is referred to as `ain_XX`, where `XX` is the pin number, ranging from `01` to `14`. <br/> <br/> Input Pins: `ain_01 - ain_14` <br/> DataType: `int16` <br/> Unit: `user-defined` (default: `mV`) <br/> Min: `-32768` <br/> Max: `32768` <br/> Sample Rate: `30Hz` |
+|`/io/digital_out` | [`automatepro_interfaces/msg/DigitalOut`](https://github.com/Lemvos/automatepro_interfaces/blob/master/msg/DigitalOut.msg) | Publish the desired digital out states to this topic. AutomatePro supports 12 digital out pins (6 High Side and 6 Low Side). Each input pin is referred to as `DIGITAL_OUT_H_XX` or `DIGITAL_OUT_L_XX`, where `H/L` refer to `High Side/Low Side`, `XX` is the pin number, ranging from `01` to `06`. <br/> <br/> `d_out_pin_id`: <br/> DataType: `uint8` <br/> (Use ENUM constants defined in msg definiton.  `DigitalOut.DIGITAL_OUT_H_XX`: `01-06` <br/> `DigitalOut.DIGITAL_OUT_L_XX`: `01-06`) <br/> <br/> `duty_cycle_percent`: <br/> DataType: `uint8` <br/> Min: `0` in percentage `%` <br/> Max: `100` in percentage `%`<br/> <br/> Response Rate: `200 ms` |
 
-:::tip 
-Each message includes a timestamp in the header, indicating when the IO-Controller collected the data. 
-It is recommended to use this timestamp for any time-sensitive data processing, as it ensures that transport 
-delays are accounted for, providing accurate timing for downstream operations.
-:::
-
-## Configuration
-Analog input channels can be configured with gain, offset, and filter parameters via the IO Config service for precise scaling, calibration, and signal smoothing.
-:::info
-**Default Configuration:**  
-Unless reconfigured, all analog inputs use the following defaults:
-- **Gain:** 1.0  
-- **Offset:** 0.0  
-- **Filter Coefficient:** 1.0 (no filtering)
-
-Raw millivolt (mV) values are published without any signal processing applied.
-:::
-
-### Services
-
-|Service | Type | Description  |
-|---------|---------|---------|
-|`/io/config` | [`automatepro_interfaces/srv/IOConfig`](https://github.com/Lemvos/automatepro_interfaces/blob/master/srv/IOConfig.srv) | Configure analog input parameters including gain, offset, and exponential moving average filter. <br/> <br/> **Request Parameters:** <br/> `key`: <br/> DataType: `uint16` <br/> Key associated with the value to be changed (0-65535) <br/> `value`: <br/> DataType: `float32` <br/> Corresponding value for the key <br/> `flag`: <br/> DataType: `uint8` <br/> Flags (0-255) <br/> <br/> **Response Parameters:** <br/> `ret_code`: <br/> DataType: `uint16` <br/> Return code from MCU (0-65535) <br/> `ret_value`: <br/> DataType: `float32` <br/> Returns the set value if successful |
-
-### Configuration Keys
-
-The analog input configuration uses keys in the format `1XXY` where:
-- `XX` is the analog input index (01-14)
-- `Y` is the parameter type:
-  - `0` for gain (m)
-  - `1` for offset (c)
-  - `2` for exponential moving average filter
-
-#### Configuration Parameters
-
-**Set Gain (m):**
-- Key: `1XX0` where XX is the AIN index (01-14)
-- Value: Desired gain value as float
-- Example: Key `1010` sets gain for AIN_01
-
-**Set Offset (c):**
-- Key: `1XX1` where XX is the AIN index (01-14)
-- Value: Desired offset value as float
-- Example: Key `1011` sets offset for AIN_01
-
-**Set Exponential Moving Average Filter:**
-- Key: `1XX2` where XX is the AIN index (01-14)
-- Value: Filter coefficient (0.0 - 1.0)
-  - `1.0` = No filtering
-  - Lower values = More filtering (slower response)
-- Example: Key `1012` sets filter for AIN_01
-
-:::tip[**Signal Processing Formula**]
-
-1. **Scaling and Calibration:**
-   ```
-   Scaled_Value = (Raw_Value × Gain) + Offset
-   ```
-
-2. **Exponential Moving Average Filter:**
-   ```
-   Final_Value = Previous_Value × (1 - α) + Scaled_Value × α
-   ```
-   Where `α` (alpha) is the filter coefficient (0.0 - 1.0)
-:::
-
-:::warning
-The final calculated value `(Raw_Value * Gain) + Offset` must not exceed the `int16` range (-32768 to 32768).  
-Results outside this range will be clamped.
-:::
-### Configuration Example
-
-<Tabs>
-  <TabItem value="CLI" label="CLI">
-    ```bash
-    # Set gain for AIN_01 to 2.0
-    ros2 service call /io/config automatepro_interfaces/srv/IOConfig "{key: 1010, value: 2.0, flag: 0}"
-    
-    # Set offset for AIN_01 to 100.0
-    ros2 service call /io/config automatepro_interfaces/srv/IOConfig "{key: 1011, value: 100.0, flag: 0}"
-    
-    # Set filter coefficient for AIN_01 to 0.9
-    ros2 service call /io/config automatepro_interfaces/srv/IOConfig "{key: 1012, value: 0.9, flag: 0}"
-    ```
-  </TabItem>
-  {/* <TabItem value="Python" label="Python" default>
-    ```python
-    import rclpy
-    from rclpy.node import Node
-    from automatepro_interfaces.srv import IOConfig
-
-    class AINConfigNode(Node):
-        def __init__(self):
-            super().__init__('ain_config_node')
-            self.client = self.create_client(IOConfig, '/io/config')
-            
-        def configure_ain(self, ain_index, gain=None, offset=None, filter_coeff=None):
-            """Configure analog input parameters
-            
-            Args:
-                ain_index (int): AIN index (1-14)
-                gain (float, optional): Gain value
-                offset (float, optional): Offset value  
-                filter_coeff (float, optional): Filter coefficient (0.0-1.0)
-            """
-            if not self.client.wait_for_service(timeout_sec=1.0):
-                self.get_logger().error('IO config service not available')
-                return
-                
-            # Set gain
-            if gain is not None:
-                key = 1000 + (ain_index * 10) + 0  # 1XX0 format
-                self._call_service(key, gain, "gain")
-                
-            # Set offset
-            if offset is not None:
-                key = 1000 + (ain_index * 10) + 1  # 1XX1 format
-                self._call_service(key, offset, "offset")
-                
-            # Set filter
-            if filter_coeff is not None:
-                key = 1000 + (ain_index * 10) + 2  # 1XX2 format
-                self._call_service(key, filter_coeff, "filter")
-                
-        def _call_service(self, key, value, param_name):
-            request = IOConfig.Request()
-            request.key = key
-            request.value = value
-            request.flag = 0
-            
-            future = self.client.call_async(request)
-            rclpy.spin_until_future_complete(self, future)
-            
-            response = future.result()
-            if response.ret_code == 0:
-                self.get_logger().info(f'Successfully set {param_name} to {response.ret_value}')
-            else:
-                self.get_logger().error(f'Failed to set {param_name}, return code: {response.ret_code}')
-
-    def main():
-        rclpy.init()
-        node = AINConfigNode()
-        
-        # Example: Configure AIN_01 with gain=2.0, offset=100.0, filter=0.9
-        node.configure_ain(ain_index=1, gain=2.0, offset=100.0, filter_coeff=0.9)
-        
-        node.destroy_node()
-        rclpy.shutdown()
-
-    if __name__ == '__main__':
-        main()
-    ```
-  </TabItem> */}
-</Tabs>
 
 ## Example
 
-Example code snippet prints the states of the analog inputs by subscribing to the `/io/ain` topic.
-ROS package can be found [here](https://github.com/Lemvos/automatepro_tutorials).  
+Example code snippet toggles the duty cycle of Digital Out 01 by publishing to the `/io/digital_out` topic.  
+ROS package can be found [here](https://github.com/Lemvos/automatepro_tutorials).
 
 <Tabs>
   <TabItem value="Python" label="Python" default>
     ```Python
     import rclpy
     from rclpy.node import Node
-    from automatepro_interfaces.msg import AnalogIn
-    
-    class AnalogInSubscriber(Node):
-    
+    from automatepro_interfaces.msg import DigitalOut
+
+    class DigitalOutPublisher(Node):
+
         def __init__(self):
-            super().__init__('analog_in_subscriber')
-            self.subscription = self.create_subscription(
-                AnalogIn,
-                '/io/analog_in',
-                self.subscriber_callback,
-                10)
-    
-        def subscriber_callback(self, msg):
-            self.get_logger().info(
-                f'Received AnalogIn message:\n'
-                f'AIN_01: {msg.ain_01}\nAIN_02: {msg.ain_02}\nAIN_03: {msg.ain_03}\n'
-                f'AIN_04: {msg.ain_04}\nAIN_05: {msg.ain_05}\nAIN_06: {msg.ain_06}\n'
-                f'AIN_07: {msg.ain_07}\nAIN_08: {msg.ain_08}\nAIN_09: {msg.ain_09}\n'
-                f'AIN_10: {msg.ain_10}\nAIN_11: {msg.ain_11}\nAIN_12: {msg.ain_12}\n'
-                f'AIN_13: {msg.ain_13}\nAIN_14: {msg.ain_14}'
-            )
-    
+            super().__init__('digital_out_publisher')
+            self.publisher_ = self.create_publisher(DigitalOut, '/io/digital_out', 10)
+            self.timer = self.create_timer(1.0, self.timer_callback)  # 1s
+            self.duty_cycle_sequence = [0, 50, 100, 50]
+            self.sequence_index = 0
+
+        def timer_callback(self):
+            msg = DigitalOut()
+            msg.d_out_pin_id = DigitalOut.DIGITAL_OUT_H_01 # Digital Out High Side Pin 01
+            msg.duty_cycle_percent = self.duty_cycle_sequence[self.sequence_index] # Duty Cycle:  0%, 50%, 100%, 50%
+                                                                                   # 0% - OFF, 100% - ON 
+            self.publisher_.publish(msg)
+            self.get_logger().info('Publishing: "%s"' % msg)
+            self.sequence_index = (self.sequence_index + 1) % len(self.duty_cycle_sequence)
+
     def main(args=None):
         rclpy.init(args=args)
-        node = AnalogInSubscriber()
+        node = DigitalOutPublisher()
         rclpy.spin(node)
         node.destroy_node()
         rclpy.shutdown()
     
     if __name__ == '__main__':
         main()
+
     ```
     Run the node using the following command:
 
     ```bash
-    ros2 run automatepro_python_tutorials analog_in_node
+    ros2 run automatepro_python_tutorials digital_out_node
     ```
 
-    </TabItem>
-      <TabItem value="C++" label="C++">
+  </TabItem>
+  <TabItem value="C++" label="C++">
     ```cpp
+    #include <vector>
     #include <rclcpp/rclcpp.hpp>
-    #include <automatepro_interfaces/msg/analog_in.hpp>
-    
-    class AnalogInSubscriber : public rclcpp::Node
+    #include <automatepro_interfaces/msg/digital_out.hpp>
+
+    class DigitalOutPublisher : public rclcpp::Node
     {
     public:
-        AnalogInSubscriber()
-            : Node("analog_in_subscriber")
+        DigitalOutPublisher()
+            : Node("digital_out_publisher"),
+              duty_cycle_sequence_{0, 50, 100, 50},
+              sequence_index_(0)
         {
-            subscription_ = this->create_subscription<automatepro_interfaces::msg::AnalogIn>(
-                "/io/analog_in", 10,
-                std::bind(&AnalogInSubscriber::listener_callback, this, std::placeholders::_1));
+            publisher_ = this->create_publisher<automatepro_interfaces::msg::DigitalOut>("/io/digital_out", 10);
+            timer_ = this->create_wall_timer(
+                std::chrono::seconds(1),
+                std::bind(&DigitalOutPublisher::timer_callback, this));
         }
-    
+
     private:
-        void listener_callback(const automatepro_interfaces::msg::AnalogIn::SharedPtr msg) const
+        void timer_callback()
         {
-            RCLCPP_INFO(this->get_logger(), 
-                "Received AnalogIn message:\n"
-                "AIN_01: %u\nAIN_02: %u\nAIN_03: %u\n"
-                "AIN_04: %u\nAIN_05: %u\nAIN_06: %u\n"
-                "AIN_07: %u\nAIN_08: %u\nAIN_09: %u\n"
-                "AIN_10: %u\nAIN_11: %u\nAIN_12: %u\n"
-                "AIN_13: %u\nAIN_14: %u",
-                msg->ain_01, msg->ain_02, msg->ain_03,
-                msg->ain_04, msg->ain_05, msg->ain_06,
-                msg->ain_07, msg->ain_08, msg->ain_09,
-                msg->ain_10, msg->ain_11, msg->ain_12,
-                msg->ain_13, msg->ain_14);
+            auto msg = automatepro_interfaces::msg::DigitalOut();
+            msg.d_out_pin_id = automatepro_interfaces::msg::DigitalOut::DIGITAL_OUT_H_01; // Digital Out High Side Pin 01
+            msg.duty_cycle_percent = duty_cycle_sequence_[sequence_index_]; // Duty Cycle: 0%, 50%, 100%, 50%
+                                                                            // 0% - OFF, 100% - ON
+            publisher_->publish(msg);
+            RCLCPP_INFO(this->get_logger(), "Publishing: d_out_pin_id=%d, duty_cycle_percent=%d", msg.d_out_pin_id, msg.duty_cycle_percent);
+
+            // Update the sequence index
+            sequence_index_ = (sequence_index_ + 1) % duty_cycle_sequence_.size();
         }
-    
-        rclcpp::Subscription<automatepro_interfaces::msg::AnalogIn>::SharedPtr subscription_;
+
+        rclcpp::Publisher<automatepro_interfaces::msg::DigitalOut>::SharedPtr publisher_;
+        rclcpp::TimerBase::SharedPtr timer_;
+        std::vector<int> duty_cycle_sequence_;
+        size_t sequence_index_;
     };
-    
+
     int main(int argc, char *argv[])
     {
         rclcpp::init(argc, argv);
-        rclcpp::spin(std::make_shared<AnalogInSubscriber>());
+        rclcpp::spin(std::make_shared<DigitalOutPublisher>());
+        rclcpp::shutdown();
+        return 0;
+    }
+
+    ```
+    Run the node using the following command:
+
+    ```bash
+    ros2 run automatepro_cpp_tutorials digital_out_node    
+    ```
+
+    :::warning[Important]
+    It would be good to have a service that can change pin number and duty cycle instead of changing it from the code.
+    :::
+
+  </TabItem>
+</Tabs>
+
+
+
+# --- warning-systems.mdx ---
+
+---
+sidebar_position: 5
+---
+
+# Warning Systems
+
+## Hardware 
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+import AutomatePro_DOut from './images/AutomatePro_DOut.png'
+import BreakoutBoard_DOut from '../connectivity/images/BreakoutBoard-MISC.png'
+
+Warning system outputs are configured to control standard components such as warning lights and buzzers. 
+Two drivers are allocated for the lighting system, and one driver is designated for a warning buzzer/horn. 
+
+###  Connector Pinout
+
+<Tabs>
+  <TabItem value="Connector" label="Connector" default>
+   
+    <img src={AutomatePro_DOut} style={{width: '100%'}}/>
+
+</TabItem>
+  <TabItem value="Development Breakout Board" label="Development Breakout Board">
+
+    <img src={BreakoutBoard_DOut} style={{width: '100%'}}/>
+
+  </TabItem>
+</Tabs>
+
+import WarningLight from './images/Warning_System.svg';
+import WarningBuzzer from './images/Warning_Buzzer.svg';
+
+    <strong></strong><br />
+### Warning Systems Specifications
+<div style={{ columnCount:3, columnGap: '20px' }}>
+  <p>
+    <strong></strong><br />
+    | Parameter       | Value         |
+    |-----------------|---------------|
+    | Onstate     | Sinks up to 24V |
+    | Drive Current      | 2A  |
+    | Controllability  | ON/OFF  |
+    | Number of Sinks | 3          |
+
+    <strong></strong><br />
+<WarningBuzzer style={{width: 'auto', height: '270px', paddingTop: '20px'}} />
+  <WarningLight style={{width: 'auto', height: '340px',paddingBottom: '10px'}}/> 
+
+  </p>
+</div>
+<br />
+
+
+## ROS API
+
+### Subscribers
+
+|Topic | Type | Description  |
+|---------|---------|---------|
+|`/io/warning_system_out` | [`automatepro_interfaces/msg/WarningSystems`](https://github.com/Lemvos/automatepro_interfaces/blob/master/msg/WarningSystems.msg) | Publish the desired states for the warning system to this topic. <br/> <br/>  Inputs:<br/> `warning_system_id`: <br/> DataType: `uint8` <br/> _(Use ENUM constants defined in msg definition. Options `WarningSystems.WARNING_BUZZER`, `WarningSystems.WARNING_LIGHT1`, `WarningSystems.WARNING_LIGHT_2`)_ <br/> <br/> `state`: <br/> DataType: `bool` <br/> _(Use ENUM constants defined in msg definiton. Options `WarningSystems.ON`, `WarningSystems.OFF`)_ <br/> <br/> Response Rate: `200 ms` |
+
+
+## Example
+
+Example code snippet toggles the Warning Buzzer ON/OFF by publishing to the `/io/warning_system_out` topic.  
+ROS package can be found [here](https://github.com/Lemvos/automatepro_tutorials).
+
+<Tabs>
+  <TabItem value="Python" label="Python" default>
+    ```Python
+    import rclpy
+    from rclpy.node import Node
+    from automatepro_interfaces.msg import WarningSystems
+
+    class WarningSystemsPublisher(Node):
+
+        def __init__(self):
+            super().__init__('warning_systems_publisher')
+            self.publisher_ = self.create_publisher(WarningSystems, '/io/warning_system_out', 10)
+            self.timer = self.create_timer(1.0, self.timer_callback)  # 1s
+            self.state = False
+
+        def timer_callback(self):
+            msg = WarningSystems()
+            msg.warning_system_id = WarningSystems.WARNING_BUZZER
+            msg.state = self.state
+            self.publisher_.publish(msg)
+            self.get_logger().info(
+                'Publishing WarningSystems: warning_system_id=%d, state=%d' %
+                (msg.warning_system_id, msg.state))
+            self.state = not self.state # Toggle state
+
+    def main(args=None):
+        rclpy.init(args=args)
+        node = WarningSystemsPublisher()
+        rclpy.spin(node)
+        node.destroy_node()
+        rclpy.shutdown()
+
+    if __name__ == '__main__':
+        main()
+    ```
+    Run the node using the following command:
+
+    ```bash
+    ros2 run automatepro_python_tutorials warning_system_out_node 
+    ```
+  </TabItem>
+  <TabItem value="C++" label="C++">
+    ```cpp
+    #include <rclcpp/rclcpp.hpp>
+    #include <automatepro_interfaces/msg/warning_systems.hpp>
+
+    class WarningSystemsPublisher : public rclcpp::Node
+    {
+    public:
+        WarningSystemsPublisher()
+            : Node("warning_systems_publisher"), state_(false)
+        {
+            publisher_ = this->create_publisher<automatepro_interfaces::msg::WarningSystems>("/io/warning_system_out", 10);
+            timer_ = this->create_wall_timer(
+                std::chrono::seconds(1),
+                std::bind(&WarningSystemsPublisher::timer_callback, this));
+        }
+
+    private:
+        void timer_callback()
+        {
+            auto msg = automatepro_interfaces::msg::WarningSystems();
+            msg.warning_system_id = automatepro_interfaces::msg::WarningSystems::WARNING_BUZZER;  // Change to WARNING_LIGHT1 or WARNING_LIGHT2 as needed
+            msg.state = state_;
+            publisher_->publish(msg);
+            RCLCPP_INFO(this->get_logger(), "Publishing WarningSystems: warning_system_id=%d, state=%d",
+                        msg.warning_system_id, msg.state);
+            state_ = !state_;  // Toggle state
+        }
+
+        rclcpp::Publisher<automatepro_interfaces::msg::WarningSystems>::SharedPtr publisher_;
+        rclcpp::TimerBase::SharedPtr timer_;
+        bool state_;
+    };
+
+    int main(int argc, char *argv[])
+    {
+        rclcpp::init(argc, argv);
+        rclcpp::spin(std::make_shared<WarningSystemsPublisher>());
+        rclcpp::shutdown();
+        return 0;
+    }
+
+    ```
+    Run the node using the following command:
+
+    ```bash
+    ros2 run automatepro_cpp_tutorials warning_system_out_node 
+    ```
+  </TabItem>
+</Tabs>
+
+# --- estop.mdx ---
+
+---
+sidebar_position: 1
+---
+
+# E-STOP
+## Hardware 
+
+The AutomatePro features an onboard E-STOP input, allowing it to read the state of an external E-STOP. 
+While the E-STOP state disables the Digital Drives, its primary function is as an input and it has not 
+been designed to meet any functional safety standards.
+
+The E-STOP input is located on Pin A5 (main connector A) and requires an input voltage ranging from 5-24VDC. 
+If the E-STOP pin does not need to be sensed, it must be connected to the onboard 12V_IO supply.
+
+
+
+## Software Interface
+
+The E-STOP status can be read from the pin gpiochip1 25.
+ 
+
+
+
+
+
+# --- flashing.mdx ---
+
+---
+sidebar_position: 3
+---
+
+# Flashing
+
+### Accessing and Reinstalling the Breather Vent
+
+import AMP_Flash_INSTALL from './images/AMP-Flashing.PNG'
+
+<figure style={{ textAlign: 'center' }}>
+  <img src={AMP_Flash_INSTALL} alt="AutomatePro Flashing Process" style={{ width: '60%' }} />
+  <figcaption>Accessing Flashing Port</figcaption>
+</figure>
+
+**1.** To access the flashing port, the breather vent (1) must first be removed. To remove it, turn the breather vent by hand until it is fully detached.  
+**2.** Once removed, insert the small adapter PCB. Further instructions can be found [here].  
+**3.** After flashing is complete, ensure there is sufficient grease on the breather vent O-ring.  
+**4.** Reinstall the breather vent by hand-tightening it.  
+
+
+# --- io-controller.mdx ---
+
+---
+sidebar_position: 2
+---
+
+# Device Diagnostics
+## Hardware 
+The AutomatePro is equipped with comprehensive onboard current and voltage monitoring systems. 
+This reduces the need for external sensors and enables effective downstream monitoring, 
+facilitating early detection of potential issues. These monitored power supply diagram is given below.
+
+import AutomatePro_Hardware_Diagram_PSU from '../../images/AutomatePro_Hardware_Diagram_PSU.png'
+
+<img src={AutomatePro_Hardware_Diagram_PSU} alt="AutomatePro_PSU_Diagram-img" style={{width: '100%'}}/>
+
+## ROS API
+
+### Publishers
+|Topic | Type | Description  |
+|---------|---------|---------|
+| `/diagnostics/io_controller_hw` | [`automatepro_interfaces`<br/>`/msg/IOControllerDiagnostic`](https://github.com/Lemvos/automatepro_interfaces/blob/master/msg/IOControllerDiagnostic.msg) | Contains the diagnostic information about the IO Controller Hardware. <br/><br/> **Fields:** <br/><br/> - `vbatt_voltage_monitor` (`float32`): <br/> Battery voltage in `V` <br/><br/> - `v12_io_smps_current_monitor` (`float32`): <br/> Current level on the 12V IO SMPS in `A` <br/><br/> - `v12_io_smps_voltage_monitor` (`float32`): <br/> Voltage level on the 12V IO SMPS in `V` <br/><br/> - `main_sbc_smps_current_monitor` (`float32`): <br/> Current level on the 12V or 5V SBC SMPS in `A` <br/><br/> - `main_sbc_smps_voltage_monitor` (`float32`): <br/> Voltage level on the 12V or 5V SBC SMPS in `V` <br/><br/> - `v5_io_smps_voltage_monitor` (`float32`): <br/> Voltage level on the 5V IO SMPS in `V` <br/><br/> - `amp_total_power_monitor` (`float32`): <br/> Total power draw in `W` <br/><br/> - `v12_io_power_good` (`bool`): <br/> Indicates if the 12V IO power is good <br/><br/> - `v5_io_power_good` (`bool`): <br/> Indicates if the 5V IO power is good <br/><br/> - `v3_3_io_power_good` (`bool`): <br/>Indicates if the 3.3V IO power is good <br/><br/> - `v12_sbc_power_good` (`bool`): <br/> Indicates if the 12V SBC power is good <br/><br/> - `v5_sbc_power_good` (`bool`): <br/> Indicates if the 5V SBC power is good <br/><br/> - `v3_3_sbc_power_good` (`bool`): <br/>Indicates if the 3.3V SBC power is good <br/><br/> - `v1_8_sbc_power_good` (`bool`): <br/>Indicates if the 1.8V SBC power is good <br/><br/> - `motor_drive_fault_1` (`bool`): <br/> Indicates a fault in motor drive 1 <br/><br/> - `motor_drive_fault_2` (`bool`): <br/>Indicates a fault in motor drive 2 <br/><br/> - `motor_drive_fault_3` (`bool`): <br/>Indicates a fault in motor drive 3 <br/><br/> - `motor_drive_fault_4` (`bool`): <br/>Indicates a fault in motor drive 4 <br/><br/> - `board_temp` (`int8`): <br/>Board temperature in degrees Celsius `°C` |
+| `/diagnostics/io_controller_fw` | [`automatepro_interfaces`<br/>`/msg/IOFirmwareDiagnostic`](https://github.com/Lemvos/automatepro_interfaces/blob/master/msg/IOFirmwareDiagnostic.msg) | Contains the diagnostic information about the IO Controller Firmware. <br/><br/> **Fields:** <br/><br/> - `uptime` (`uint32`): <br/> IO Controller uptime in seconds <br/><br/> - `fault_code` (`uint8[10]`): <br/> Fault Code, check [Index](#fault-code-index) for more details<br/> <br/>|
+
+## Fault Code Index
+
+| Fault Code | Description | 
+|---------|---------|
+| `0` | No Fault |
+
+## Example
+
+Example code snippet prints the diagnostic information about the IO Controller by subscribing to the `/diagnostics/io_controller_hw` topic.  
+ROS package can be found [here](https://github.com/Lemvos/automatepro_tutorials).
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+<Tabs>
+  <TabItem value="Python" label="Python" default>
+    ```python
+    import rclpy
+    from rclpy.node import Node
+    from automatepro_interfaces.msg import IOControllerDiagnostic
+
+    class IOControllerDiagnosticSubscriber(Node):
+
+        def __init__(self):
+            super().__init__('io_controller_diagnostic_subscriber')
+            self.subscription = self.create_subscription(
+                IOControllerDiagnostic,
+                '/diagnostics/io_controller_hw',
+                self.listener_callback,
+                10)
+
+        def listener_callback(self, msg):
+            self.get_logger().info(f'Battery Voltage: {msg.vbatt_voltage_monitor} V')
+            self.get_logger().info(f'12V IO SMPS Current: {msg.v12_io_smps_current_monitor} A')
+            self.get_logger().info(f'12V IO SMPS Voltage: {msg.v12_io_smps_voltage_monitor} V')
+            self.get_logger().info(f'Main SBC SMPS Current: {msg.main_sbc_smps_current_monitor} A')
+            self.get_logger().info(f'Main SBC SMPS Voltage: {msg.main_sbc_smps_voltage_monitor} V')
+            self.get_logger().info(f'5V IO SMPS Voltage: {msg.v5_io_smps_voltage_monitor} V')
+            self.get_logger().info(f'Total Power: {msg.amp_total_power_monitor} W')
+
+            self.get_logger().info(f'12V IO Power Good: {msg.v12_io_power_good}')
+            self.get_logger().info(f'5V IO Power Good: {msg.v5_io_power_good}')
+            self.get_logger().info(f'3.3V IO Power Good: {msg.v3_3_io_power_good}')
+            self.get_logger().info(f'12V SBC Power Good: {msg.v12_sbc_power_good}')
+            self.get_logger().info(f'5V SBC Power Good: {msg.v5_sbc_power_good}')
+            self.get_logger().info(f'3.3V SBC Power Good: {msg.v3_3_sbc_power_good}')
+            self.get_logger().info(f'1.8V SBC Power Good: {msg.v1_8_sbc_power_good}')
+
+            self.get_logger().info(f'Motor Drive Fault 1: {msg.motor_drive_fault_1}')
+            self.get_logger().info(f'Motor Drive Fault 2: {msg.motor_drive_fault_2}')
+            self.get_logger().info(f'Motor Drive Fault 3: {msg.motor_drive_fault_3}')
+            self.get_logger().info(f'Motor Drive Fault 4: {msg.motor_drive_fault_4}')
+
+            self.get_logger().info(f'Board Temperature: {msg.board_temp} °C')
+
+    def main(args=None):
+        rclpy.init(args=args)
+        node = IOControllerDiagnosticSubscriber()
+        rclpy.spin(node)
+        node.destroy_node()
+        rclpy.shutdown()
+
+    if __name__ == '__main__':
+        main()
+    ```
+
+    Run the node using the following command:
+
+    ```bash
+    ros2 run automatepro_python_tutorials io_controller_diagnostic_node
+    ```
+    </TabItem>
+    <TabItem value="C++" label="C++">
+    ```cpp
+    #include <rclcpp/rclcpp.hpp>
+    #include <automatepro_interfaces/msg/io_controller_diagnostic.hpp>
+
+    class IOControllerDiagnosticSubscriber : public rclcpp::Node
+    {
+    public:
+        IOControllerDiagnosticSubscriber()
+            : Node("io_controller_diagnostic_subscriber")
+        {
+            subscription_ = this->create_subscription<automatepro_interfaces::msg::IOControllerDiagnostic>(
+                "/diagnostics/io_controller_hw", 10,
+                std::bind(&IOControllerDiagnosticSubscriber::listener_callback, this, std::placeholders::_1));
+        }
+
+    private:
+        void listener_callback(const automatepro_interfaces::msg::IOControllerDiagnostic::SharedPtr msg) const
+        {   
+            RCLCPP_INFO(this->get_logger(), "Battery Voltage: %.3f V", msg->vbatt_voltage_monitor);
+            RCLCPP_INFO(this->get_logger(), "12V IO SMPS Current: %.3f A", msg->v12_io_smps_current_monitor);
+            RCLCPP_INFO(this->get_logger(), "12V IO SMPS Voltage: %.3f V", msg->v12_io_smps_voltage_monitor);
+            RCLCPP_INFO(this->get_logger(), "Main SBC SMPS Current: %.3f A", msg->main_sbc_smps_current_monitor);
+            RCLCPP_INFO(this->get_logger(), "Main SBC SMPS Voltage: %.3f V", msg->main_sbc_smps_voltage_monitor);
+            RCLCPP_INFO(this->get_logger(), "5V IO SMPS Voltage: %.3f V", msg->v5_io_smps_voltage_monitor);
+            RCLCPP_INFO(this->get_logger(), "Total Power: %.3f W", msg->amp_total_power_monitor);
+
+            RCLCPP_INFO(this->get_logger(), "12V IO Power Good: %d", msg->v12_io_power_good);
+            RCLCPP_INFO(this->get_logger(), "5V IO Power Good: %d", msg->v5_io_power_good);
+            RCLCPP_INFO(this->get_logger(), "3.3V IO Power Good: %d", msg->v3_3_io_power_good);
+            RCLCPP_INFO(this->get_logger(), "12V SBC Power Good: %d", msg->v12_sbc_power_good);
+            RCLCPP_INFO(this->get_logger(), "5V SBC Power Good: %d", msg->v5_sbc_power_good);
+            RCLCPP_INFO(this->get_logger(), "3.3V SBC Power Good: %d", msg->v3_3_sbc_power_good);
+            RCLCPP_INFO(this->get_logger(), "1.8V SBC Power Good: %d", msg->v1_8_sbc_power_good);
+
+            RCLCPP_INFO(this->get_logger(), "Motor Drive Fault 1: %d", msg->motor_drive_fault_1);
+            RCLCPP_INFO(this->get_logger(), "Motor Drive Fault 2: %d", msg->motor_drive_fault_2);
+            RCLCPP_INFO(this->get_logger(), "Motor Drive Fault 3: %d", msg->motor_drive_fault_3);
+            RCLCPP_INFO(this->get_logger(), "Motor Drive Fault 4: %d", msg->motor_drive_fault_4);
+
+            RCLCPP_INFO(this->get_logger(), "Board Temperature: %.2f °C", msg->board_temp);
+
+        }
+
+        rclcpp::Subscription<automatepro_interfaces::msg::IOControllerDiagnostic>::SharedPtr subscription_;
+    };
+
+    int main(int argc, char *argv[])
+    {
+        rclcpp::init(argc, argv);
+        auto node = std::make_shared<IOControllerDiagnosticSubscriber>();
+        rclcpp::spin(node);
         rclcpp::shutdown();
         return 0;
     }
@@ -2077,10 +2892,13 @@ ROS package can be found [here](https://github.com/Lemvos/automatepro_tutorials)
     Run the node using the following command:
 
     ```bash
-    ros2 run automatepro_cpp_tutorials analog_in_node    
+    ros2 run automatepro_cpp_tutorials io_controller_diagnostic_node
     ```
-  </TabItem>
+    </TabItem>
 </Tabs>
+
+
+
 
 # --- imu.mdx ---
 
@@ -2447,6 +3265,258 @@ sudo systemctl start automatepro-core-driver
 ```
 
 
+# --- heading.mdx ---
+
+---
+sidebar_position: 2
+toc_max_heading_level: 3
+---
+
+# RTK Heading
+## Hardware
+The AutomatePro can be configured with an integrated RTK GNSS Heading sensor, providing precision heading. 
+This is particularly useful when the onboard IMU’s magnetic bearing accuracy is insufficient or when the 
+magnetometer is affected by the operational environment, such as around large steel structures. 
+Depending on antenna placement, the GNSS heading sensor can also measure the robot’s roll or pitch. 
+
+The differential heading is provided by Ublox F9H series, if included, the AutomatePro will 
+feature a blue FAKRA connector for antenna connection, with “GNSS-2” used for position and 
+“GNSS-12VDC” for [heading.](./heading.mdx)
+ 
+![alt text](images/AutomatePro_GNSS.png)
+
+
+### GNSS Heading Specifications
+| Parameter               | Value                                                                                           |
+|-------------------------|-------------------------------------------------------------------------------------------------|
+| Receiver                | Ublox F9H                                                                                 |
+|Connector                |GNSS-1 (FAKRA C - Signal Blue)                                                                                    |
+| Supported Constellation | GPS, Galileo, BeiDou, GLONASS                                                             |
+| Heading Accuracy        |  0.4° <sup>1</sup>    (with antenna spacing &gt;1m)                                                  |
+| Max Navigation Update Rate     | Default 1Hz (Can be configured up to 8Hz)                                                                                        |
+:::info[Info]
+<sup>1</sup> Depends on antennas, spacing between the two antennas  - [see datasheet for more information](https://content.u-blox.com/sites/default/files/ZED-F9H-01B_DataSheet_UBX-21025012.pdf)
+:::
+
+
+### External Antenna
+The AutomatePro system is compatible with a variety of multi-band high precision GNSS antennas that have a FAKRA Type C connector (Signal Blue). To find more information on the antennas that have been used with AutomatePro, this can be found [here](/automatepro/category/antennas).
+
+Antenna Separation: Ensure a minimum separation of 1 meter (≥1m) between the two GNSS antennas. Configuration options are heading (Yaw) and pitch or heading (Yaw) and roll.
+
+import PitchYaw from './images/PitchYaw.png';
+import YawRoll from './images/YawRoll.png';
+
+<div style={{ columnCount: 2, columnGap: '0px' }}>
+  <div>
+    <strong></strong><br />
+    <h2>Yaw & Pitch </h2>
+    <img src={PitchYaw} style={{width: '90%'}}/>
+  </div>
+  <div>
+    <strong></strong><br />
+
+    <h2>Yaw & Roll</h2>
+    <img src={YawRoll} style={{width: '90%', paddingTop: '10px'}}/>
+  </div>
+</div>
+<br />
+
+
+
+## ROS API
+
+**Node**: `automatepro_gnss_heading_node`
+
+
+### Publishers
+
+|Topic | Type | Description  |
+|---------|---------|---------|
+|`/sensor/gnss/heading/true_heading` | [`automatepro_msgs/msg/GNSSHeading`](https://github.com/Lemvos/automatepro_interfaces/blob/master/msg/GNSSHeading.msg) | Simplified differential heading in quaternions|
+|`/sensor/gnss/heading/navrelposned` | [`ublox_msgs/msg/NavRELPOSNED9`](https://github.com/Lemvos/automatepro_gnss_driver/blob/ros2/ublox_msgs/msg/NavRELPOSNED9.msg) | Detailed Differential Heading  with additional information for calculating either roll or pitch|
+|`/sensor/gnss/heading/mon_hw` | [`ublox_msgs/msg/MonHW`](https://github.com/Lemvos/automatepro_gnss_driver/blob/ros2/ublox_msgs/msg/MonHW.msg) | Hardware and Firmware status of the GNSS heading module |
+|`/sensor/gnss/heading/nmea` | [`nmea_msgs/msg/Sentence`](https://docs.ros.org/en/ros2_packages/humble/api/nmea_msgs/interfaces/msg/Sentence.html) | Raw NMEA data |
+|`/diagnostics` |  [`diagnostic_msgs/msg/DiagnosticArray`](https://docs.ros2.org/latest/api/diagnostic_msgs/msg/DiagnosticArray.html) | GNSS heading ROS driver Diagnostics |
+
+:::tip[Topic for heading data]
+Even though `/sensor/gnss/heading/navrelposned` provides more information, it is not required for normal use cases. 
+It is recommended to use `/sensor/gnss/heading/true_heading` for your application, which provides heading in quaternions with covariances.
+:::
+
+### Parameters
+|Parameter | Type  |   Values  | Runtime | Description  |
+|---------|---------|---------|---------|---------|
+| `device` | string |  | `read-only` | Serial port (automatically configured) | 
+| `frame_id` | string |   |  `read-only` | Frame id for the messages published |
+| `publish.all` | bool | `true/false` | `read-only` |  Publish all the messages |
+| `publish.mon.hw`| bool | `true/false` | `read-only` | enable GNSS module diagnostics publishing  | 
+| `publish.nav.relposned` | bool | `true/false` | `read-only` | enable NavRELPOSNED9 msg publishing  | 
+| `publish.nav.heading` | bool | `true/false` |  `read-only` |  enable heading publishing **must be `true`** | 
+| `publish.nmea` | bool | `true/false` | `read-only` |  enable NMEA msg publishing  | 
+| `debug` | int | `0-4` | `read-only` |  0 - no debug msgs, 4 - all debug msgs | 
+
+## Configuration
+
+**Driver**: [automatepro_gnss_driver](http://github.com/Lemvos/automatepro_gnss_driver)  
+**Container**: [automatepro-core-driver](https://hub.docker.com/repository/docker/lemvos/automatepro_core_driver/general)
+
+:::info
+All the configuration related files can be found at `/opt/automatepro/config/ros` directory.  
+These files will be mounted to docker container and will be used by the ROS driver.
+Environmental variables can be set in the `/opt/automatepro/.env` file.
+:::
+
+config file can be found here.
+
+```bash
+/opt/automatepro/config/ros/gnss_heading_params.yaml
+```
+
+
+### Default Config 
+    ```yml
+      automatepro_gnss_heading_node:
+        ros__parameters:
+          debug: 0 
+
+          device: /dev/ttyACM1
+          frame_id: gnss_heading
+
+          config_on_startup: false   
+
+          # Publishers
+          publish:
+            all: false
+            mon:
+              hw: true
+            nav:
+              all: false
+              posllh: false
+              posecef: false
+              heading: true
+              relposned: false
+            nmea: false
+    ```
+  
+:::warning[Important]
+Restart the `automatepro-core-driver` docker container after changing the configuration.  
+Configurations will only be applied after the container restarts.
+
+```bash
+docker restart automatepro-core-driver
+```
+:::
+
+# --- correction.mdx ---
+
+---
+sidebar_position: 3
+toc_max_heading_level: 4
+---
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+# RTK Correction
+## Hardware
+The default correction data is received over a cellular connection or WiFi connection.
+
+:::info[Info]
+The AutomatePro offers an optional L-band RTK correction data receiver, which receives correction data from L-Band satellites. This allows the RTK GNSS to function without a cellular connection and provides correction redundancy. For more information, contact Lemvos.
+:::
+## ROS API
+
+**Node**: `automatepro_ntrip_client`/`automatepro_spartn_client`
+
+
+### Publishers
+
+|Topic | Type | Description  |
+|---------|---------|---------|
+| `/sensor/gnss/correction` | [`rtcm_msgs/msg/Message`](https://github.com/tilk/rtcm_msgs/blob/master/msg/Message.msg) | RTCM or SPARTN Correction data |
+
+
+### Parameters
+|Parameter | Type  |   Values  | Runtime R/W | Description  |
+|---------|---------|---------|---------|---------|
+| `use_https` | bool |  `true/false` | `read-only` | HTTPS will be used if set true. | 
+| `host` | string |   | `read-only` | NTRIP sever hostname |
+| `port` | string | `2101/2102`| `read-only`  | NTRIP server port |
+| `mountpoint` | string |  |  `read-only`|  Mountpoint to connect |
+| `username` | string |  | `read-only` | Login credentials for the NTRIP subscription  |
+| `password` | string |  | `read-only` | Login credentials for the NTRIP subscription  |
+
+
+## RTK Correction Services
+
+RTK (Real-Time Kinematic) correction service is a technique used to enhance the precision of position data derived from satellite-based positioning systems such as GPS, GLONASS, Galileo, and BeiDou. RTK achieves centimeter-level accuracy by using corrections transmitted from a network of ground-based reference stations to a receiver in real time. AutomatePro supports RTCM and SPARTN correction data over the NTRIP protocol.
+
+If you already have login credentials for the NTRIP caster you want to use, please proceed with configuring parameters as shown below. If you would like to set up a new one, follow the instructions below.
+
+:::info
+We have tested the following services with AutomatePro. If you use a different service provider, you may have to configure according to their instructions.
+:::
+
+
+Here are the suggested free and paid correction services:
+
+### Ublox PointPerfect (PAID)
+
+Ublox correction data in SPARTN format, which is more efficient than RTCM. More details can be found [here](https://www.u-blox.com/en/technologies/ppp-rtk-gnss-correction-services-pointperfect). 
+Before proceeding to the next step, you should have a `hostname`, `mountpoint`, `username`, and `password`.
+
+
+config file can be found here:  
+```bash
+/opt/automatepro/config/ros/spartn_client.yaml
+```
+
+```yml
+automatepro_spartn_client:
+  ros__parameters:
+    tls: false
+    host: "ppntrip.services.u-blox.com"
+    port: "2101"  # [http: 2101, https: 2102]
+    mountpoint: "EU" # [Europe: EU, United States: US, Australia: AU, Korea: KR]
+    username: "username" # Your USERNAME
+    password: "password" # Your PASSWORD
+```
+
+
+### RTK2go (FREE)
+
+RTK2go is a community NTRIP Caster that provides RTK correction service for free. To use it, select a mountpoint near your location. 
+You can find the list of available mountpoints [here](http://monitor.use-snip.com/?hostUrl=rtk2go.com&port=2101). Click on **`view-all`** to view mountpoints on the map.
+
+Once you have the mountpoint you would like to connect to, add that to the config file as shown below.
+
+config file can be found here:
+```bash
+/opt/automatepro/config/ros/ntrip_client.yaml
+```
+
+```yml
+ntrip_client:
+  ros__parameters:
+    use_https: false
+    host: rtk2go.com
+    port: 2101
+    mountpoint: Prittlbach  # Add your mountpoint here
+    username: "noname"
+    password: "password"
+```
+
+
+:::warning[Important]
+Restart the `automatepro-core-driver` docker container after changing the configuration.  
+Configurations will only be applied after the container restarts.
+
+```bash
+docker restart automatepro-core-driver
+```
+:::
+
+
 # --- position.mdx ---
 
 ---
@@ -2787,258 +3857,6 @@ The UBX Configuration window provides full access to all available settings for 
 
 
 
-# --- heading.mdx ---
-
----
-sidebar_position: 2
-toc_max_heading_level: 3
----
-
-# RTK Heading
-## Hardware
-The AutomatePro can be configured with an integrated RTK GNSS Heading sensor, providing precision heading. 
-This is particularly useful when the onboard IMU’s magnetic bearing accuracy is insufficient or when the 
-magnetometer is affected by the operational environment, such as around large steel structures. 
-Depending on antenna placement, the GNSS heading sensor can also measure the robot’s roll or pitch. 
-
-The differential heading is provided by Ublox F9H series, if included, the AutomatePro will 
-feature a blue FAKRA connector for antenna connection, with “GNSS-2” used for position and 
-“GNSS-12VDC” for [heading.](./heading.mdx)
- 
-![alt text](images/AutomatePro_GNSS.png)
-
-
-### GNSS Heading Specifications
-| Parameter               | Value                                                                                           |
-|-------------------------|-------------------------------------------------------------------------------------------------|
-| Receiver                | Ublox F9H                                                                                 |
-|Connector                |GNSS-1 (FAKRA C - Signal Blue)                                                                                    |
-| Supported Constellation | GPS, Galileo, BeiDou, GLONASS                                                             |
-| Heading Accuracy        |  0.4° <sup>1</sup>    (with antenna spacing &gt;1m)                                                  |
-| Max Navigation Update Rate     | Default 1Hz (Can be configured up to 8Hz)                                                                                        |
-:::info[Info]
-<sup>1</sup> Depends on antennas, spacing between the two antennas  - [see datasheet for more information](https://content.u-blox.com/sites/default/files/ZED-F9H-01B_DataSheet_UBX-21025012.pdf)
-:::
-
-
-### External Antenna
-The AutomatePro system is compatible with a variety of multi-band high precision GNSS antennas that have a FAKRA Type C connector (Signal Blue). To find more information on the antennas that have been used with AutomatePro, this can be found [here](/automatepro/category/antennas).
-
-Antenna Separation: Ensure a minimum separation of 1 meter (≥1m) between the two GNSS antennas. Configuration options are heading (Yaw) and pitch or heading (Yaw) and roll.
-
-import PitchYaw from './images/PitchYaw.png';
-import YawRoll from './images/YawRoll.png';
-
-<div style={{ columnCount: 2, columnGap: '0px' }}>
-  <div>
-    <strong></strong><br />
-    <h2>Yaw & Pitch </h2>
-    <img src={PitchYaw} style={{width: '90%'}}/>
-  </div>
-  <div>
-    <strong></strong><br />
-
-    <h2>Yaw & Roll</h2>
-    <img src={YawRoll} style={{width: '90%', paddingTop: '10px'}}/>
-  </div>
-</div>
-<br />
-
-
-
-## ROS API
-
-**Node**: `automatepro_gnss_heading_node`
-
-
-### Publishers
-
-|Topic | Type | Description  |
-|---------|---------|---------|
-|`/sensor/gnss/heading/true_heading` | [`automatepro_msgs/msg/GNSSHeading`](https://github.com/Lemvos/automatepro_interfaces/blob/master/msg/GNSSHeading.msg) | Simplified differential heading in quaternions|
-|`/sensor/gnss/heading/navrelposned` | [`ublox_msgs/msg/NavRELPOSNED9`](https://github.com/Lemvos/automatepro_gnss_driver/blob/ros2/ublox_msgs/msg/NavRELPOSNED9.msg) | Detailed Differential Heading  with additional information for calculating either roll or pitch|
-|`/sensor/gnss/heading/mon_hw` | [`ublox_msgs/msg/MonHW`](https://github.com/Lemvos/automatepro_gnss_driver/blob/ros2/ublox_msgs/msg/MonHW.msg) | Hardware and Firmware status of the GNSS heading module |
-|`/sensor/gnss/heading/nmea` | [`nmea_msgs/msg/Sentence`](https://docs.ros.org/en/ros2_packages/humble/api/nmea_msgs/interfaces/msg/Sentence.html) | Raw NMEA data |
-|`/diagnostics` |  [`diagnostic_msgs/msg/DiagnosticArray`](https://docs.ros2.org/latest/api/diagnostic_msgs/msg/DiagnosticArray.html) | GNSS heading ROS driver Diagnostics |
-
-:::tip[Topic for heading data]
-Even though `/sensor/gnss/heading/navrelposned` provides more information, it is not required for normal use cases. 
-It is recommended to use `/sensor/gnss/heading/true_heading` for your application, which provides heading in quaternions with covariances.
-:::
-
-### Parameters
-|Parameter | Type  |   Values  | Runtime | Description  |
-|---------|---------|---------|---------|---------|
-| `device` | string |  | `read-only` | Serial port (automatically configured) | 
-| `frame_id` | string |   |  `read-only` | Frame id for the messages published |
-| `publish.all` | bool | `true/false` | `read-only` |  Publish all the messages |
-| `publish.mon.hw`| bool | `true/false` | `read-only` | enable GNSS module diagnostics publishing  | 
-| `publish.nav.relposned` | bool | `true/false` | `read-only` | enable NavRELPOSNED9 msg publishing  | 
-| `publish.nav.heading` | bool | `true/false` |  `read-only` |  enable heading publishing **must be `true`** | 
-| `publish.nmea` | bool | `true/false` | `read-only` |  enable NMEA msg publishing  | 
-| `debug` | int | `0-4` | `read-only` |  0 - no debug msgs, 4 - all debug msgs | 
-
-## Configuration
-
-**Driver**: [automatepro_gnss_driver](http://github.com/Lemvos/automatepro_gnss_driver)  
-**Container**: [automatepro-core-driver](https://hub.docker.com/repository/docker/lemvos/automatepro_core_driver/general)
-
-:::info
-All the configuration related files can be found at `/opt/automatepro/config/ros` directory.  
-These files will be mounted to docker container and will be used by the ROS driver.
-Environmental variables can be set in the `/opt/automatepro/.env` file.
-:::
-
-config file can be found here.
-
-```bash
-/opt/automatepro/config/ros/gnss_heading_params.yaml
-```
-
-
-### Default Config 
-    ```yml
-      automatepro_gnss_heading_node:
-        ros__parameters:
-          debug: 0 
-
-          device: /dev/ttyACM1
-          frame_id: gnss_heading
-
-          config_on_startup: false   
-
-          # Publishers
-          publish:
-            all: false
-            mon:
-              hw: true
-            nav:
-              all: false
-              posllh: false
-              posecef: false
-              heading: true
-              relposned: false
-            nmea: false
-    ```
-  
-:::warning[Important]
-Restart the `automatepro-core-driver` docker container after changing the configuration.  
-Configurations will only be applied after the container restarts.
-
-```bash
-docker restart automatepro-core-driver
-```
-:::
-
-# --- correction.mdx ---
-
----
-sidebar_position: 3
-toc_max_heading_level: 4
----
-import Tabs from '@theme/Tabs';
-import TabItem from '@theme/TabItem';
-
-# RTK Correction
-## Hardware
-The default correction data is received over a cellular connection or WiFi connection.
-
-:::info[Info]
-The AutomatePro offers an optional L-band RTK correction data receiver, which receives correction data from L-Band satellites. This allows the RTK GNSS to function without a cellular connection and provides correction redundancy. For more information, contact Lemvos.
-:::
-## ROS API
-
-**Node**: `automatepro_ntrip_client`/`automatepro_spartn_client`
-
-
-### Publishers
-
-|Topic | Type | Description  |
-|---------|---------|---------|
-| `/sensor/gnss/correction` | [`rtcm_msgs/msg/Message`](https://github.com/tilk/rtcm_msgs/blob/master/msg/Message.msg) | RTCM or SPARTN Correction data |
-
-
-### Parameters
-|Parameter | Type  |   Values  | Runtime R/W | Description  |
-|---------|---------|---------|---------|---------|
-| `use_https` | bool |  `true/false` | `read-only` | HTTPS will be used if set true. | 
-| `host` | string |   | `read-only` | NTRIP sever hostname |
-| `port` | string | `2101/2102`| `read-only`  | NTRIP server port |
-| `mountpoint` | string |  |  `read-only`|  Mountpoint to connect |
-| `username` | string |  | `read-only` | Login credentials for the NTRIP subscription  |
-| `password` | string |  | `read-only` | Login credentials for the NTRIP subscription  |
-
-
-## RTK Correction Services
-
-RTK (Real-Time Kinematic) correction service is a technique used to enhance the precision of position data derived from satellite-based positioning systems such as GPS, GLONASS, Galileo, and BeiDou. RTK achieves centimeter-level accuracy by using corrections transmitted from a network of ground-based reference stations to a receiver in real time. AutomatePro supports RTCM and SPARTN correction data over the NTRIP protocol.
-
-If you already have login credentials for the NTRIP caster you want to use, please proceed with configuring parameters as shown below. If you would like to set up a new one, follow the instructions below.
-
-:::info
-We have tested the following services with AutomatePro. If you use a different service provider, you may have to configure according to their instructions.
-:::
-
-
-Here are the suggested free and paid correction services:
-
-### Ublox PointPerfect (PAID)
-
-Ublox correction data in SPARTN format, which is more efficient than RTCM. More details can be found [here](https://www.u-blox.com/en/technologies/ppp-rtk-gnss-correction-services-pointperfect). 
-Before proceeding to the next step, you should have a `hostname`, `mountpoint`, `username`, and `password`.
-
-
-config file can be found here:  
-```bash
-/opt/automatepro/config/ros/spartn_client.yaml
-```
-
-```yml
-automatepro_spartn_client:
-  ros__parameters:
-    tls: false
-    host: "ppntrip.services.u-blox.com"
-    port: "2101"  # [http: 2101, https: 2102]
-    mountpoint: "EU" # [Europe: EU, United States: US, Australia: AU, Korea: KR]
-    username: "username" # Your USERNAME
-    password: "password" # Your PASSWORD
-```
-
-
-### RTK2go (FREE)
-
-RTK2go is a community NTRIP Caster that provides RTK correction service for free. To use it, select a mountpoint near your location. 
-You can find the list of available mountpoints [here](http://monitor.use-snip.com/?hostUrl=rtk2go.com&port=2101). Click on **`view-all`** to view mountpoints on the map.
-
-Once you have the mountpoint you would like to connect to, add that to the config file as shown below.
-
-config file can be found here:
-```bash
-/opt/automatepro/config/ros/ntrip_client.yaml
-```
-
-```yml
-ntrip_client:
-  ros__parameters:
-    use_https: false
-    host: rtk2go.com
-    port: 2101
-    mountpoint: Prittlbach  # Add your mountpoint here
-    username: "noname"
-    password: "password"
-```
-
-
-:::warning[Important]
-Restart the `automatepro-core-driver` docker container after changing the configuration.  
-Configurations will only be applied after the container restarts.
-
-```bash
-docker restart automatepro-core-driver
-```
-:::
-
-
 # --- desktop.mdx ---
 
 # Desktop Environment
@@ -3165,892 +3983,9 @@ import AMP_DIN_INSTALL from './images/AMP-DIN-INSTALL.PNG'
 
 
 
-# --- io-controller.mdx ---
-
----
-sidebar_position: 2
----
-
-# Device Diagnostics
-## Hardware 
-The AutomatePro is equipped with comprehensive onboard current and voltage monitoring systems. 
-This reduces the need for external sensors and enables effective downstream monitoring, 
-facilitating early detection of potential issues. These monitored power supply diagram is given below.
-
-import AutomatePro_Hardware_Diagram_PSU from '../../images/AutomatePro_Hardware_Diagram_PSU.png'
-
-<img src={AutomatePro_Hardware_Diagram_PSU} alt="AutomatePro_PSU_Diagram-img" style={{width: '100%'}}/>
-
-## ROS API
-
-### Publishers
-|Topic | Type | Description  |
-|---------|---------|---------|
-| `/diagnostics/io_controller_hw` | [`automatepro_interfaces`<br/>`/msg/IOControllerDiagnostic`](https://github.com/Lemvos/automatepro_interfaces/blob/master/msg/IOControllerDiagnostic.msg) | Contains the diagnostic information about the IO Controller Hardware. <br/><br/> **Fields:** <br/><br/> - `vbatt_voltage_monitor` (`float32`): <br/> Battery voltage in `V` <br/><br/> - `v12_io_smps_current_monitor` (`float32`): <br/> Current level on the 12V IO SMPS in `A` <br/><br/> - `v12_io_smps_voltage_monitor` (`float32`): <br/> Voltage level on the 12V IO SMPS in `V` <br/><br/> - `main_sbc_smps_current_monitor` (`float32`): <br/> Current level on the 12V or 5V SBC SMPS in `A` <br/><br/> - `main_sbc_smps_voltage_monitor` (`float32`): <br/> Voltage level on the 12V or 5V SBC SMPS in `V` <br/><br/> - `v5_io_smps_voltage_monitor` (`float32`): <br/> Voltage level on the 5V IO SMPS in `V` <br/><br/> - `amp_total_power_monitor` (`float32`): <br/> Total power draw in `W` <br/><br/> - `v12_io_power_good` (`bool`): <br/> Indicates if the 12V IO power is good <br/><br/> - `v5_io_power_good` (`bool`): <br/> Indicates if the 5V IO power is good <br/><br/> - `v3_3_io_power_good` (`bool`): <br/>Indicates if the 3.3V IO power is good <br/><br/> - `v12_sbc_power_good` (`bool`): <br/> Indicates if the 12V SBC power is good <br/><br/> - `v5_sbc_power_good` (`bool`): <br/> Indicates if the 5V SBC power is good <br/><br/> - `v3_3_sbc_power_good` (`bool`): <br/>Indicates if the 3.3V SBC power is good <br/><br/> - `v1_8_sbc_power_good` (`bool`): <br/>Indicates if the 1.8V SBC power is good <br/><br/> - `motor_drive_fault_1` (`bool`): <br/> Indicates a fault in motor drive 1 <br/><br/> - `motor_drive_fault_2` (`bool`): <br/>Indicates a fault in motor drive 2 <br/><br/> - `motor_drive_fault_3` (`bool`): <br/>Indicates a fault in motor drive 3 <br/><br/> - `motor_drive_fault_4` (`bool`): <br/>Indicates a fault in motor drive 4 <br/><br/> - `board_temp` (`int8`): <br/>Board temperature in degrees Celsius `°C` |
-| `/diagnostics/io_controller_fw` | [`automatepro_interfaces`<br/>`/msg/IOFirmwareDiagnostic`](https://github.com/Lemvos/automatepro_interfaces/blob/master/msg/IOFirmwareDiagnostic.msg) | Contains the diagnostic information about the IO Controller Firmware. <br/><br/> **Fields:** <br/><br/> - `uptime` (`uint32`): <br/> IO Controller uptime in seconds <br/><br/> - `fault_code` (`uint8[10]`): <br/> Fault Code, check [Index](#fault-code-index) for more details<br/> <br/>|
-
-## Fault Code Index
-
-| Fault Code | Description | 
-|---------|---------|
-| `0` | No Fault |
-
-## Example
-
-Example code snippet prints the diagnostic information about the IO Controller by subscribing to the `/diagnostics/io_controller_hw` topic.  
-ROS package can be found [here](https://github.com/Lemvos/automatepro_tutorials).
-
-import Tabs from '@theme/Tabs';
-import TabItem from '@theme/TabItem';
-
-<Tabs>
-  <TabItem value="Python" label="Python" default>
-    ```python
-    import rclpy
-    from rclpy.node import Node
-    from automatepro_interfaces.msg import IOControllerDiagnostic
-
-    class IOControllerDiagnosticSubscriber(Node):
-
-        def __init__(self):
-            super().__init__('io_controller_diagnostic_subscriber')
-            self.subscription = self.create_subscription(
-                IOControllerDiagnostic,
-                '/diagnostics/io_controller_hw',
-                self.listener_callback,
-                10)
-
-        def listener_callback(self, msg):
-            self.get_logger().info(f'Battery Voltage: {msg.vbatt_voltage_monitor} V')
-            self.get_logger().info(f'12V IO SMPS Current: {msg.v12_io_smps_current_monitor} A')
-            self.get_logger().info(f'12V IO SMPS Voltage: {msg.v12_io_smps_voltage_monitor} V')
-            self.get_logger().info(f'Main SBC SMPS Current: {msg.main_sbc_smps_current_monitor} A')
-            self.get_logger().info(f'Main SBC SMPS Voltage: {msg.main_sbc_smps_voltage_monitor} V')
-            self.get_logger().info(f'5V IO SMPS Voltage: {msg.v5_io_smps_voltage_monitor} V')
-            self.get_logger().info(f'Total Power: {msg.amp_total_power_monitor} W')
-
-            self.get_logger().info(f'12V IO Power Good: {msg.v12_io_power_good}')
-            self.get_logger().info(f'5V IO Power Good: {msg.v5_io_power_good}')
-            self.get_logger().info(f'3.3V IO Power Good: {msg.v3_3_io_power_good}')
-            self.get_logger().info(f'12V SBC Power Good: {msg.v12_sbc_power_good}')
-            self.get_logger().info(f'5V SBC Power Good: {msg.v5_sbc_power_good}')
-            self.get_logger().info(f'3.3V SBC Power Good: {msg.v3_3_sbc_power_good}')
-            self.get_logger().info(f'1.8V SBC Power Good: {msg.v1_8_sbc_power_good}')
-
-            self.get_logger().info(f'Motor Drive Fault 1: {msg.motor_drive_fault_1}')
-            self.get_logger().info(f'Motor Drive Fault 2: {msg.motor_drive_fault_2}')
-            self.get_logger().info(f'Motor Drive Fault 3: {msg.motor_drive_fault_3}')
-            self.get_logger().info(f'Motor Drive Fault 4: {msg.motor_drive_fault_4}')
-
-            self.get_logger().info(f'Board Temperature: {msg.board_temp} °C')
-
-    def main(args=None):
-        rclpy.init(args=args)
-        node = IOControllerDiagnosticSubscriber()
-        rclpy.spin(node)
-        node.destroy_node()
-        rclpy.shutdown()
-
-    if __name__ == '__main__':
-        main()
-    ```
-
-    Run the node using the following command:
-
-    ```bash
-    ros2 run automatepro_python_tutorials io_controller_diagnostic_node
-    ```
-    </TabItem>
-    <TabItem value="C++" label="C++">
-    ```cpp
-    #include <rclcpp/rclcpp.hpp>
-    #include <automatepro_interfaces/msg/io_controller_diagnostic.hpp>
-
-    class IOControllerDiagnosticSubscriber : public rclcpp::Node
-    {
-    public:
-        IOControllerDiagnosticSubscriber()
-            : Node("io_controller_diagnostic_subscriber")
-        {
-            subscription_ = this->create_subscription<automatepro_interfaces::msg::IOControllerDiagnostic>(
-                "/diagnostics/io_controller_hw", 10,
-                std::bind(&IOControllerDiagnosticSubscriber::listener_callback, this, std::placeholders::_1));
-        }
-
-    private:
-        void listener_callback(const automatepro_interfaces::msg::IOControllerDiagnostic::SharedPtr msg) const
-        {   
-            RCLCPP_INFO(this->get_logger(), "Battery Voltage: %.3f V", msg->vbatt_voltage_monitor);
-            RCLCPP_INFO(this->get_logger(), "12V IO SMPS Current: %.3f A", msg->v12_io_smps_current_monitor);
-            RCLCPP_INFO(this->get_logger(), "12V IO SMPS Voltage: %.3f V", msg->v12_io_smps_voltage_monitor);
-            RCLCPP_INFO(this->get_logger(), "Main SBC SMPS Current: %.3f A", msg->main_sbc_smps_current_monitor);
-            RCLCPP_INFO(this->get_logger(), "Main SBC SMPS Voltage: %.3f V", msg->main_sbc_smps_voltage_monitor);
-            RCLCPP_INFO(this->get_logger(), "5V IO SMPS Voltage: %.3f V", msg->v5_io_smps_voltage_monitor);
-            RCLCPP_INFO(this->get_logger(), "Total Power: %.3f W", msg->amp_total_power_monitor);
-
-            RCLCPP_INFO(this->get_logger(), "12V IO Power Good: %d", msg->v12_io_power_good);
-            RCLCPP_INFO(this->get_logger(), "5V IO Power Good: %d", msg->v5_io_power_good);
-            RCLCPP_INFO(this->get_logger(), "3.3V IO Power Good: %d", msg->v3_3_io_power_good);
-            RCLCPP_INFO(this->get_logger(), "12V SBC Power Good: %d", msg->v12_sbc_power_good);
-            RCLCPP_INFO(this->get_logger(), "5V SBC Power Good: %d", msg->v5_sbc_power_good);
-            RCLCPP_INFO(this->get_logger(), "3.3V SBC Power Good: %d", msg->v3_3_sbc_power_good);
-            RCLCPP_INFO(this->get_logger(), "1.8V SBC Power Good: %d", msg->v1_8_sbc_power_good);
-
-            RCLCPP_INFO(this->get_logger(), "Motor Drive Fault 1: %d", msg->motor_drive_fault_1);
-            RCLCPP_INFO(this->get_logger(), "Motor Drive Fault 2: %d", msg->motor_drive_fault_2);
-            RCLCPP_INFO(this->get_logger(), "Motor Drive Fault 3: %d", msg->motor_drive_fault_3);
-            RCLCPP_INFO(this->get_logger(), "Motor Drive Fault 4: %d", msg->motor_drive_fault_4);
-
-            RCLCPP_INFO(this->get_logger(), "Board Temperature: %.2f °C", msg->board_temp);
-
-        }
-
-        rclcpp::Subscription<automatepro_interfaces::msg::IOControllerDiagnostic>::SharedPtr subscription_;
-    };
-
-    int main(int argc, char *argv[])
-    {
-        rclcpp::init(argc, argv);
-        auto node = std::make_shared<IOControllerDiagnosticSubscriber>();
-        rclcpp::spin(node);
-        rclcpp::shutdown();
-        return 0;
-    }
-    ```
-    Run the node using the following command:
-
-    ```bash
-    ros2 run automatepro_cpp_tutorials io_controller_diagnostic_node
-    ```
-    </TabItem>
-</Tabs>
-
-
-
-
-# --- estop.mdx ---
-
----
-sidebar_position: 1
----
-
-# E-STOP
-## Hardware 
-
-The AutomatePro features an onboard E-STOP input, allowing it to read the state of an external E-STOP. 
-While the E-STOP state disables the Digital Drives, its primary function is as an input and it has not 
-been designed to meet any functional safety standards.
-
-The E-STOP input is located on Pin A5 (main connector A) and requires an input voltage ranging from 5-24VDC. 
-If the E-STOP pin does not need to be sensed, it must be connected to the onboard 12V_IO supply.
-
-
-
-## Software Interface
-
-The E-STOP status can be read from the pin gpiochip1 25.
- 
-
-
-
-
-
-# --- flashing.mdx ---
-
----
-sidebar_position: 3
----
-
-# Flashing
-
-### Accessing and Reinstalling the Breather Vent
-
-import AMP_Flash_INSTALL from './images/AMP-Flashing.PNG'
-
-<figure style={{ textAlign: 'center' }}>
-  <img src={AMP_Flash_INSTALL} alt="AutomatePro Flashing Process" style={{ width: '60%' }} />
-  <figcaption>Accessing Flashing Port</figcaption>
-</figure>
-
-**1.** To access the flashing port, the breather vent (1) must first be removed. To remove it, turn the breather vent by hand until it is fully detached.  
-**2.** Once removed, insert the small adapter PCB. Further instructions can be found [here].  
-**3.** After flashing is complete, ensure there is sufficient grease on the breather vent O-ring.  
-**4.** Reinstall the breather vent by hand-tightening it.  
-
-
-# --- can-bus.mdx ---
-
-# CAN Bus
-import Tabs from '@theme/Tabs';
-import TabItem from '@theme/TabItem';
-import breakoutboard from './images/BreakoutBoard-MISC.png'
-import automatepro from './images/AutomatePro-CAN.png'
-
-## Hardware 
-One CAN FD bus is integrated into the AutomatePro with a max data rate of 8Mbs. A 120ohm termination resistor should be placed between CAN_H and CAN_L at both ends of the CAN network. 
-
-### Connector Pinout
-<Tabs>
-  <TabItem value="Connector" label="Connector" default>
-   
-    <img src={automatepro} style={{width: '100%'}}/>
-
-</TabItem>
-  <TabItem value="Development Breakout Board" label="Development Breakout Board">
-
-    <img src={breakoutboard} style={{width: '100%'}}/>
-
-  </TabItem>
-</Tabs>
-
-
-### CAN Specifications
-
-| Parameter                                | Value          |
-|------------------------------------------|----------------|
-| Transceiver                              | TCAN3413DDFR   |
-| CAN FD                                   | Yes            |
-| Max data rate                            | 8Mbps          |
-| Integrated 120ohm termination resistor | No             |
-| CAN H and L input protection | < ±58V          |
-
-
-## Software
-To utilize the network, it is necessary to configure the interface properties. For instance, to set the network 
-interface with a bus bit rate of 500 kbps, 
-use the following commands:
-```bash
-sudo ip link set can0 up type can bitrate 500000 berr-reporting on
-```
-Install CAN utilities for testing:
-```bash
-sudo apt-get install can-utils
-```
-
-This command transfers a packet to can0 with CAN ID 123 and data 'abcdabcd':
-```bash
-cansend can0 123#abcdabcd
-```
-This command receives packets from any CAN node connected to the bus:
-```bash
-candump -x any
-```
-For more information about the use of `cansend`, enter this command:
-```bash
-cansend --help
-```
-You can use other tools, such as `cangen`, for different filtering options.
-
-:::tip
-C++ and Python examples can be found [here](https://github.com/Lemvos/automatepro_tutorials/tree/master/misc).
-:::
-
-## Troubleshooting
-
-### Loopback test
-You can perform a loopback test to determine whether the controller is working.
-
-Ensure the CAN drivers are loaded. To check if the drivers are loaded use the following command:
-    ```bash
-    lsmod | grep mttcan
-    ```
-    If the drivers are not loaded, enter this command:
-    ```bash
-    sudo modprobe mttcan
-    ```
-
-To perform a loopback test, run the following commands:
-```bash  
-sudo ip link set can0 type can bitrate 500000 loopback on
-sudo ip link set can0 up
-candump can0 &
-cansend can0 123#abcdabcd
-```
-If the loopback test is successful, the last command displays this:
-
-```bash
-can0 123 [4] AB CD AB CD
-can0 123 [4] AB CD AB CD
-```
-### Other Methods
-Additional debugging techniques to consider:
-
-1. If a loopback test shows that the controller is working correctly and you are still not able to send or receive packets, 
-  try reconnecting the transceiver and confirm that the connections are correctly made.
-
-2. Check if the `mttcan` driver is loaded.
-
-3. Connect an oscilloscope to analyze the bus signal integrity and verify proper operation.
-
-4. If the device logs a `No buffer space available` message during send, enter this command to use the polling mechanism:
-    ```bash
-    cangen -L 8 can0 -p 1000
-    ```
-
-
-# --- wifi.mdx ---
-
-# Wi-Fi & Bluetooth
-import amp_wifi from './images/AutomatePro-WIFI.png'
-
-## Hardware 
-To use the Wi-Fi/Bluetooth, two external antennas should be connected to the highlighted FAKRA I Coded (Beige) connectors shown in the image below.
-
-### Connector Location
- <img src={amp_wifi} style={{width: '70%'}}/>
-
-### Wi-Fi & Bluetooth Specifications
-| Parameter          | Value                                              |
-|--------------------|----------------------------------------------------|
-| Transceiver        | AW-CB375NF                                         |
-| Frequencies        | 2.4GHz and 5GHz                                    |
-| Max data rate      | 300 Mbps (@ 2.4GHz) and 867 Mbps (@ 5GHz)          |
-| WLAN Standard      | IEEE 802.11 a/b/g/n/ac MIMO                        |
-| Bluetooth Standard | BT 5.0 standard & compatible with Bluetooth 2.1+EDR|
-
-
-## Configuration
-
-The WiFi connection can be configured using either the NMCLI (NetworkManager Command Line Interface) or Remote Desktop.
-
-### Using NMCLI
-
-1. Open a terminal(using SSH or serial) on the AutomatePro device.
-2. List the available WiFi networks to ensure the desired network is available:
-   ```bash
-   sudo nmcli dev wifi list
-   ```
-3. Connect to your desired WiFi network:
-   ```bash
-   sudo nmcli dev wifi connect "YOUR_SSID" password "YOUR_PASSWORD"
-   ```
-4. Verify the connection:
-   ```bash
-   nmcli dev status
-   ```
-   Ensure that the WiFi device shows as connected.
-   ```bash
-   DEVICE         TYPE      STATE         CONNECTION 
-   wlan0          wifi      connected     `your_wifi_network`          
-   ```
-## Troubleshooting
-If you encounter issues connecting to WiFi, try the following steps:
-
-- Ensure that the antennas are securely connected to the FAKRA connectors.
-- Verify that the WiFi network credentials (SSID and password) are correct.
-- If the issue persists, restart the NetworkManager service and try connecting again.
-   ```bash
-   sudo systemctl restart NetworkManager
-   ```
-
-If the problem persists, please contact support for further assistance. When contacting support, include the output of the following command:
-   ```bash
-   sudo journalctl -u NetworkManager
-   ```
-
-
-
-
-
-# --- eth.mdx ---
-
-# Ethernet
-
-import amp_lan from './images/AutomatePro-LAN.png'
-import m12x from './images/M12x.png'
-
-## Hardware
-The AutomatePro includes a 1GbE Ethernet port onboard this is accessible through a M12x connector. Ethernet cables for the M12x can be found [here](/automatepro/category/cables--connectors)
-
-### Connector Location
-<img src={amp_lan} style={{width: '50%'}}/>
-
-### Ethernet Specifications
-| Parameter        | Value          |
-|------------------|----------------|
-| Supported Speed  | 10/100/1000Mbps|
-| Connector        | M12x - IP67    |
-| PoE              | No             |
-
-### M12x Connector Pinout
-<div style={{ columnCount: 2, columnGap: '10px' }}>
-  <p>
-    <strong></strong>
-    | Pin Number | LAN Signal |
-    |------------|------------|
-    | 1          | MDI0+      |
-    | 2          | MDI0-      |
-    | 3          | MDI1+      |
-    | 4          | MDI1-      |
-    | 5          | MDI3+      |
-    | 6          | MDI3-      |
-    | 7          | MDI2-      |
-    | 8          | MDI2+      |
-
-
-
-    <strong></strong><br />
-    <br />
-    <br />
-    <br />
-    <br />
-    <br />
-    <img src={m12x} style={{width: '40%'}}/>
-   
-  </p>
-</div>
-
-
-# --- 5g.mdx ---
-
-# 5G 
-## Hardware
-The AutomatePro has optional 5G connectivity. To use this, an external antenna should be connected to the highlighted FAKRA D Coded (Claret Violet) connectors shown in the image below.
-### Connector Location
-![alt text](images/AutomatePro-5G.png)
-
-### 5G Specifications
-| Parameter               | Value                                                                                           |
-|-------------------------|-------------------------------------------------------------------------------------------------|
-| Transceiver                  | RM520N-GL                                                                                       |
-| Max upload data rates   | 550Mbps (NSA) or 900Mbps (SA)                                                                   |
-| Max download data rates | 3.4Gbps (NSA) or 2.4Gbps (SA)                                                                   |
-| Frequency               | sub-6GHz                                                                                        |
-| Protocol                | 5G, LTE, WCDMA                                                                                  |
-| Coverage                | Worldwide 5G and LTE-A coverage                                                                 |
-| NSA Bands               | n1/n2/n3/n5/n7/n8/n12/n13/n14/n20/n25/n26/n28/n29<br />/n30/n38/n40/n41/n48/n66/n71/n75/n76/n77/n78/n79 |
-| SA Bands                | n1/n2/n3/n5/n7/n8/n12/n13/n14/n20/n25/n26/n28/n29<br />/n30/n38/n40/n41/n48/n66/n71/n75/n76/n77/n78/n79 |
-
-:::note
-The maximum upload and download rates are based on the manufacturer’s specifications for the 5G device. Actual performance may vary depending on the antenna used and the location of the device.
-:::
-
-### External Antenna
-The AutomatePro system is compatible with a variety of antennas. More information on compatible antennas can be found [here](/automatepro/category/antennas).
-
-### SIM Card
-For devices shipped without a SIM card, you can add one as follows:
-
-#### Installing or Removing the SIM Card
-
-import AMP_SIM_INSTALL from './images/AMP-100-AMP-ASSY-REV-A-SIM.PNG'
-
-<div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-  <img src={AMP_SIM_INSTALL} alt="automatepro-img" style={{ width: '100%' }} />
-</div>
-
-1. Ensure the device is powered off and disconnect any external connectors. It is easiest to perform this operation on a bench without the AutomatePro fixed.  
-2. Loosen and remove the eight M4x16 socket head cap screws (1).  
-3. Carefully lift the casing off from the heat sink (2).  
-4. Using tweezers, carefully install the Nano SIM. When removing, push the SIM card inwards, it will then eject itself. 
-5. Check the heat sink (4) for sufficient thermal paste.  
-6. Verify that the O-ring (3) is correctly installed and seated. 
-7. Reposition the casing onto the heat sink (2) and tighten the eight M4 cap screws. Tighten the screws in a cross-star pattern. Do not over-torque the screws.  
-
-
-
-
-## Configuration
-
-{/* ### eSIM To be added once we have a good solution
-*/}
-
-### SIM
-:::warning[Important]
-Be cautious when using AT commands. Incorrect AT commands can cause the device to malfunction.
-For more information, refer to the [manual](./resources/Quectel_RG50xQRM5xxQ_Series_AT_Commands_Manual_V1.1.pdf).
-:::
-
-Open a Serial terminal using `minicom` or any other serial terminal software to access AT Interface of the 5G module.
-```bash
-sudo minicom -D /dev/ttyUSB3
-```
-
-Run AT commands to check the SIM status
-```bash
-AT+CPIN?
-```
-
-Output:
-```bash
-+CPIN: READY
-
-OK
-```
-
-If the SIM card is not ready, you will need to enter the PIN code using the following command:
-```bash
-AT+CPIN=XXXX
-```
-Replace `XXXX` with the SIM card PIN code.
-This command will unlock the SIM card temporarily, and it will be locked again after a reboot.
-
-To unlock the SIM card permanently, use the following command:
-```bash
-AT+CLCK="SC",0,"XXXX"
-```
-
-### Driver
-The 5G connection is managed by a systemd service called `automatepro-wwan-manager`. The service is enabled by default and will automatically connect to the network when the device is powered on.
-This service can be enabled, disabled, started, stopped, and restarted using the `systemctl` command.
-
-By default, the 5G connection is configured to automatically connect to the network. If you need to manually configure the 5G connection, follow the steps below.
-
--  Start the 5G connection service (temporary start, will not persist after reboot):
-```bash
-sudo systemctl start automatepro-wwan-manager
-```
-
--  Stop the 5G connection service (temporary stop, will restart on reboot):
-```bash
-sudo systemctl stop automatepro-wwan-manager
-```
-
-- Disable automatic connection:
-
-```bash
-sudo systemctl disable automatepro-wwan-manager
-```
-
-- Enable automatic connection:
-```bash
-sudo systemctl enable automatepro-wwan-manager
-```
-
-## Troubleshooting
-If you encounter issues connecting to 5G, try the following steps:
-
-### Verify the driver status
-```bash
-sudo systemctl status automatepro-wwan-manager
-```
-if it is not running, start the service using the following command:
-```bash
-sudo systemctl restart automatepro-wwan-manager
-```
-
-### Check the signal strength
-
-Open Serial terminal using `minicom` or any other serial terminal software to access AT Interface of the 5G module.
-```bash
-sudo minicom -D /dev/ttyUSB3
-```
-Run AT commands to check the signal strength
-```bash
-AT+CSQ
-```
-Output:
-```bash
-+CSQ: <RSSI>,<ber>
-
-OK
-```
-| RSSI | dBm Level | Signal Quality  |
-|------|-----------------|--------|
-| 0    | -113 dBm or less | ▃ (Poor)|
-| 1    | -111 dBm | ▃ ▅ (Fair)|
-| 2 - 30 | -109 dBm to -53 dBm | ▃ ▅ ▇ (Good)|
-| 31   | -51 dBm or greater | ▃ ▅ ▇ ▉ (Excellent)|
-| 99   | Not known or not detectable | Signal Fault: Check Antenna Connection |
-
-If the problem persists, please contact support for further assistance. When contacting support, include the output of the following command:
-```bash
-sudo journalctl -u automatepro-wwan-manager 
-```
-
-
-# --- usb-type-c.mdx ---
-
-# USB Type-C
-
-import amp_usb from './images/AutomatePro-USB.png'
-import m12x from './images/M12x.png'
-
-## Hardware
-The AutomatePro features a USB Type-C connector with ALT mode, enabling it to function as a DisplayPort for connecting external screens.
-Mating cables can be [found here](/automatepro/category/cables--connectors). 
-
-In addition to connecting to peripheral systems and transferring large amounts of data, the USB-C connector can also be used for reflashing the AutomatePro.
-
-### Connector Location
-<img src={amp_usb} style={{width: '70%'}}/>
-
-### USB  Specifications
-| Parameter        | Value                              |
-|------------------|------------------------------------|
-| Transceiver      | TUSB546-DCI                        |
-| USB Version      | 3.1 Gen 1                          |
-| Max data rate    | 5 Gbps                             |
-| Alternative Mode | Yes - Can be used as a DisplayPort |
-| Connector        | M12 USB-C - IP67                   |
-
-
-
-
-
-# --- rs485.mdx ---
-
-# RS485
-import Tabs from '@theme/Tabs';
-import TabItem from '@theme/TabItem';
-import AutomatePro_RS485 from './images/AutomatePro-RS485.png'
-import BreakoutBoard_MISC from './images/BreakoutBoard-MISC.png'
-
-## Hardware 
-One RS485/RS422 bus is integrated into the AutomatePro with a max data rate of 500kbps. A 120ohm termination resistor should be placed between RS485P and RS485N at both ends of the RS485 network.
-
-
-
-###  Connector Pinout
-<Tabs>
-  <TabItem value="Connector" label="Connector" default>
-   
-    <img src={AutomatePro_RS485} style={{width: '100%'}}/>
-
-</TabItem>
-  <TabItem value="Development Breakout Board" label="Development Breakout Board">
-
-    <img src={BreakoutBoard_MISC} style={{width: '100%'}}/>
-
-  </TabItem>
-</Tabs>
-
-### RS485 Specifications
-| Parameter       | Value         |
-|-----------------|---------------|
-| Transceiver     | THVD1400DR    |
-| Data Rate       | 500 kbps      |
-| RS485 Standard  | TIA/EIA-485A  |
-| Duplex          | Half          |
-
-## Software
-
-#### Serial Port 
-`/dev/ttyTHS1` is the serial port used for RS485 communication. `RTS` pin is used to control the direction of the transceiver. 
-`RTS` is inverted and active low, `RTS` high enables the receiver and  `RTS` low enables the transmitter.
-
-## Example
-
-<Tabs>
-  <TabItem value="Python" label="Python" default>
-    ```Python
-      import serial
-      import serial.rs485
-      import time
-      
-      # Configure the serial connections
-      ser = serial.rs485.RS485(
-          port='/dev/ttyTHS1',
-          baudrate=115200,            # Set your baud rate
-          parity=serial.PARITY_NONE,
-          stopbits=serial.STOPBITS_ONE,
-          bytesize=serial.EIGHTBITS,
-          timeout=0.1                 # Timeout for read operations
-      )
-      
-      ser.rs485_mode = serial.rs485.RS485Settings(
-        rts_level_for_tx=False,
-        rts_level_for_rx=True,
-        )
-      def send_data(data):
-          ser.write(data.encode())
-          print("Sent:", data)
-
-      def receive_data():
-          incoming_data = ser.read(100)  # Read up to 100 bytes or until timeout
-          if incoming_data:
-              print("Received:", incoming_data.decode())  # Decode bytes to string
-
-      if __name__ == '__main__':
-          try:
-              while True:
-                  send_data("Hello RS485")
-                  time.sleep(1)  # Wait a bit for a response
-                  receive_data()
-          except Exception as e:
-              print("An error occurred:", str(e))
-          finally:
-              ser.close()  # Always close the serial port
-    ```
-  </TabItem>
-
-  <TabItem value="C++" label="C++">
-  ```cpp
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include <fcntl.h>
-#include <errno.h>
-#include <termios.h>
-#include <sys/ioctl.h>
-#include <linux/serial.h>
-
-int setup_serial(const char* device, int speed) {
-    int fd = open(device, O_RDWR | O_NOCTTY | O_SYNC);
-    if (fd < 0) {
-        perror("Error opening serial port");
-        return -1;
-    }
-
-    struct termios tty;
-    memset(&tty, 0, sizeof tty);
-    if (tcgetattr(fd, &tty) != 0) {
-        perror("Error from tcgetattr");
-        close(fd);
-        return -1;
-    }
-
-    cfsetospeed(&tty, speed);
-    cfsetispeed(&tty, speed);
-
-    tty.c_cflag |= (CLOCAL | CREAD);    // Ignore modem controls, enable reading
-    tty.c_cflag &= ~CSIZE;
-    tty.c_cflag |= CS8;                 // 8-bit characters
-    tty.c_cflag &= ~PARENB;             // No parity bit
-    tty.c_cflag &= ~CSTOPB;             // 1 stop bit
-    tty.c_cflag &= ~CRTSCTS;            // No hardware flow control
-
-    tty.c_iflag &= ~(IXON | IXOFF | IXANY); // Turn off s/w flow ctrl
-    tty.c_lflag &= ~(ICANON | ECHO | ECHOE | ISIG); // Disable canonical mode, echo, and signal chars
-    tty.c_oflag &= ~OPOST; // Prevent special interpretation of output bytes (e.g., newline chars)
-    tty.c_cc[VMIN]  = 0;   // Non-blocking read
-    tty.c_cc[VTIME] = 20;  // 2 seconds read timeout
-
-    if (tcsetattr(fd, TCSANOW, &tty) != 0) {
-        perror("Error from tcsetattr");
-        close(fd);
-        return -1;
-    }
-
-    return fd;
-}
-
-void set_rts(int fd, int level) {
-    int status;
-    ioctl(fd, TIOCMGET, &status);  // Get the current status of the modem lines
-    if (level)
-        status |= TIOCM_RTS;  // Set RTS high
-    else
-        status &= ~TIOCM_RTS; // Set RTS low
-    ioctl(fd, TIOCMSET, &status);
-}
-
-void send_data(int fd, const char* data) {
-    set_rts(fd, 0);  // Set RTS low to send
-    write(fd, data, strlen(data)); // Send data
-    printf("Sent: %s\n", data);
-    set_rts(fd, 1);  // Set RTS high after sending
-}
-
-void receive_data(int fd) {
-    char buf[100];
-    int n = read(fd, buf, sizeof(buf)-1);
-    if (n > 0) {
-        buf[n] = '\0';
-        printf("Received: %s\n", buf);
-    }
-}
-
-int main() {
-    int fd = setup_serial("/dev/ttyTHS1", B9600);
-    if (fd < 0) {
-        exit(EXIT_FAILURE);
-    }
-
-    while (1) {
-        send_data(fd, "Hello RS485");
-        sleep(1); // Wait a bit for a response
-        receive_data(fd);
-        sleep(1);
-    }
-
-    close(fd); // Always close the serial port
-    return 0;
-}
-
-  ```
-  </TabItem>
-</Tabs>
-
-
-## Troubleshooting
-
-- **No data is being sent or received**: Check the wiring and termination resistors. Check the user permissions and serial port parameters such as baudrate, etc.
-- **Data is being sent but not received**: Check whether the RTS pin is toggled correctly. RTS should be high to receive data.
-- **Data is being received but not sent**: Check whether the RTS pin is toggled correctly. RTS should be low to send data.
-
-If you are using terminal emulators such as `picocom`, toggle the RTS pin manually using the commands offered by the terminal emulator.
-
-
 # --- din-rail-mount.mdx ---
 
 # DIN Rail Mount 
-
-# --- rtk-gnss-antenna.mdx ---
-
-# RTK GNSS Antenna  - Taoglas
-
-import RTK_GNSS_Antenna from './images/rtk-gnss-antenna.png'
-
-<div style={{ columnCount: 2, columnGap: '20px' }}>
-  <p>
-    <strong></strong><br />
-    | Parameter            | Value                                                                 |
-    |----------------------|-----------------------------------------------------------------------|
-    | Part Number          | AMP-1002-3M                                                           |
-    | Number of Antennas   | 1x GNSS only                                                          |
-    | GNSS Connector       | 1x FAKRA Type C - Signal Blue<br />IP67 Connector                     |
-    | Mounting Type        | Screw (through hole panel)                                            |
-    | Cable Length         | 3m                                                                    |
-    | Ingress Protection   | IP67                                                                  |
-
-
-
-
-    <strong></strong><br />
-
-    <img src={RTK_GNSS_Antenna} style={{width: '55%'}}/>
-   
-  </p>
-</div>
-<br />
-[Device Datasheet](https://cdn.taoglas.com/datasheets/MA850.A.LBICG.001.pdf)
-
-# --- 7in1-antenna.mdx ---
-
-# 7-in-1 Combination Antenna - Taoglas
-import combo_antenna from './images/multi-antenna.png'
-
-<div style={{ columnCount: 2, columnGap: '20px' }}>
-  <p>
-    <strong></strong><br />
-    | Parameter            | Value                                                                 |
-    |----------------------|-----------------------------------------------------------------------|
-    | Part Number          | AMP-1001-3M                                                           |
-    | Number of Antennas   | 7                                                                     |
-    | 5G Connector         | 4x FAKRA Type D - Claret Violet<br />IP67 Connector                   |
-    | GNSS Connector       | 1x FAKRA Type C - Signal Blue<br />IP67 Connector                     |
-    | WiFi/BLE Connector   | 2x FAKRA Type I - Beige<br />IP67 Connector                           |
-    | Mounting Type        | Screw (through hole panel)                                            |
-    | Cable Length         | 3m                                                                    |
-    | Ingress Protection   | IP67                                                                  |
-
-
-
-    <strong></strong><br />
-
-    <img src={combo_antenna} style={{width: '90%'}}/>
-   
-  </p>
-</div>
-<br />
-
-
-[Device Datasheet](https://www.taoglas.com/datasheets/MA1559.A.001.pdf)
-
-
-
 
 # --- m12-rj45-cable.mdx ---
 
@@ -4105,6 +4040,71 @@ import FAKRA_Cable from './images/FAKRA-cable.jpg'
 
 
 
+
+# --- 7in1-antenna.mdx ---
+
+# 7-in-1 Combination Antenna - Taoglas
+import combo_antenna from './images/multi-antenna.png'
+
+<div style={{ columnCount: 2, columnGap: '20px' }}>
+  <p>
+    <strong></strong><br />
+    | Parameter            | Value                                                                 |
+    |----------------------|-----------------------------------------------------------------------|
+    | Part Number          | AMP-1001-3M                                                           |
+    | Number of Antennas   | 7                                                                     |
+    | 5G Connector         | 4x FAKRA Type D - Claret Violet<br />IP67 Connector                   |
+    | GNSS Connector       | 1x FAKRA Type C - Signal Blue<br />IP67 Connector                     |
+    | WiFi/BLE Connector   | 2x FAKRA Type I - Beige<br />IP67 Connector                           |
+    | Mounting Type        | Screw (through hole panel)                                            |
+    | Cable Length         | 3m                                                                    |
+    | Ingress Protection   | IP67                                                                  |
+
+
+
+    <strong></strong><br />
+
+    <img src={combo_antenna} style={{width: '90%'}}/>
+   
+  </p>
+</div>
+<br />
+
+
+[Device Datasheet](https://www.taoglas.com/datasheets/MA1559.A.001.pdf)
+
+
+
+
+# --- rtk-gnss-antenna.mdx ---
+
+# RTK GNSS Antenna  - Taoglas
+
+import RTK_GNSS_Antenna from './images/rtk-gnss-antenna.png'
+
+<div style={{ columnCount: 2, columnGap: '20px' }}>
+  <p>
+    <strong></strong><br />
+    | Parameter            | Value                                                                 |
+    |----------------------|-----------------------------------------------------------------------|
+    | Part Number          | AMP-1002-3M                                                           |
+    | Number of Antennas   | 1x GNSS only                                                          |
+    | GNSS Connector       | 1x FAKRA Type C - Signal Blue<br />IP67 Connector                     |
+    | Mounting Type        | Screw (through hole panel)                                            |
+    | Cable Length         | 3m                                                                    |
+    | Ingress Protection   | IP67                                                                  |
+
+
+
+
+    <strong></strong><br />
+
+    <img src={RTK_GNSS_Antenna} style={{width: '55%'}}/>
+   
+  </p>
+</div>
+<br />
+[Device Datasheet](https://cdn.taoglas.com/datasheets/MA850.A.LBICG.001.pdf)
 
 # --- breakout-board.mdx ---
 
