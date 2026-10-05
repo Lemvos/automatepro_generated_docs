@@ -5346,6 +5346,11 @@ The UBX Configuration window provides full access to all available settings for 
 
 The F9P is the moving base and the F9H is the rover. Write each setting to the RAM, BBR, and flash layers so it persists, and keep the UART2 baud rate the same on both receivers.
 
+Stop the core driver first so the receivers' serial ports are free:
+```bash
+sudo systemctl stop automatepro-core-driver
+```
+
 ### u-blox ZED-F9P
 
 1. Disable time mode and set a 1 Hz navigation rate:
@@ -5358,22 +5363,22 @@ The F9P is the moving base and the F9H is the rover. Write each setting to the R
     ```text
     CFG-UART2OUTPROT-RTCM3X 0x1
     ```
-3. Enable the reference-station and MSM4 messages on UART2:
+3. Enable the reference-station, MSM4, and GLONASS code-phase bias messages on UART2:
     ```text
     CFG-MSGOUT-RTCM_3X_TYPE4072_0_UART2 0x1
-    CFG-MSGOUT-RTCM_3X_TYPE4072_1_UART2 0x1
     CFG-MSGOUT-RTCM_3X_TYPE1074_UART2 0x1
     CFG-MSGOUT-RTCM_3X_TYPE1084_UART2 0x1
     CFG-MSGOUT-RTCM_3X_TYPE1094_UART2 0x1
     CFG-MSGOUT-RTCM_3X_TYPE1124_UART2 0x1
+    CFG-MSGOUT-RTCM_3X_TYPE1230_UART2 0x1
     ```
-4. Disable the MSM7 and 1230 messages on UART2:
+4. Disable the MSM7 and 4072.1 messages on UART2:
     ```text
     CFG-MSGOUT-RTCM_3X_TYPE1077_UART2 0x0
     CFG-MSGOUT-RTCM_3X_TYPE1087_UART2 0x0
     CFG-MSGOUT-RTCM_3X_TYPE1097_UART2 0x0
     CFG-MSGOUT-RTCM_3X_TYPE1127_UART2 0x0
-    CFG-MSGOUT-RTCM_3X_TYPE1230_UART2 0x0
+    CFG-MSGOUT-RTCM_3X_TYPE4072_1_UART2 0x0
     ```
 
 ### u-blox ZED-F9H
