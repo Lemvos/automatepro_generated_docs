@@ -23,6 +23,38 @@ Each row is a documentation release. The software and hardware columns show the 
   <tbody>
     <tr>
       <td style={{ verticalAlign: 'top' }}>
+        <strong>1.0.4</strong>
+        <ul>
+          <li>Reference Designs section added, with Small USV and UGV reference designs</li>
+          <li>Telit Cinterion FN990A28 added as an optional 5G module</li>
+          <li>M12 X-coded Ethernet cable accessory page added</li>
+          <li>Dev Breakout Board I/O and CAN counts corrected</li>
+          <li>RTK Correction, RTK Positioning, RTK Heading, IMU, Software Management, and CAN Bus pages aligned with software 2.1.0</li>
+          <li>GMSL2 camera type change, E-STOP commands, and RTK2go login corrected</li>
+        </ul>
+      </td>
+      <td style={{ verticalAlign: 'top' }}>
+        <strong>2.1.0</strong>
+        <ul>
+          <li>NTRIP client with a timed position refresh and a growing retry delay</li>
+          <li>NTRIP client accepts anonymous casters and stops retrying after a refused login or an unknown mountpoint</li>
+          <li>GNSS receiver command watchdog</li>
+          <li>IMU accelerometer dynamic calibration on by default</li>
+          <li>IMU covariances for every orientation mode and for the magnetic field</li>
+          <li>can0 bitrate, bus-off restart delay, and transmit queue length configurable in /opt/automatepro/.env</li>
+          <li>ROS log directory kept under a size limit</li>
+          <li>GNSS and IMU nodes respawn, with a configurable respawn delay per driver group</li>
+        </ul>
+      </td>
+      <td style={{ verticalAlign: 'top' }}>
+        <strong>v1.2</strong>
+        <ul>
+          <li>No change</li>
+        </ul>
+      </td>
+    </tr>
+    <tr>
+      <td style={{ verticalAlign: 'top' }}>
         <strong>1.0.3</strong>
         <ul>
           <li>Hardware installation split into mounting and cooling, breakout board, and camera mounting pages</li>
@@ -63,7 +95,7 @@ Each row is a documentation release. The software and hardware columns show the 
           <li>IMU calibration save and reinitialize services, plus magnetometer and accuracy reporting</li>
           <li>GMSL2 camera H.264 streaming and automatic hardware recovery</li>
           <li>Dedicated Foxglove Bridge service</li>
-          <li>GPIO line recovery for GNSS dead reckoning</li>
+          <li>GNSS receiver recovery through the shared reset line</li>
         </ul>
       </td>
       <td style={{ verticalAlign: 'top' }}>
@@ -111,7 +143,7 @@ Each row is a documentation release. The software and hardware columns show the 
       <td style={{ verticalAlign: 'top' }}>
         <strong>1.0.0</strong>
         <ul>
-          <li>First official release</li>
+          <li>First release</li>
           <li>Core features implemented</li>
         </ul>
       </td>
@@ -1323,6 +1355,34 @@ import FAKRA_Cable from './images/FAKRA-cable.jpg'
 
 
 
+# --- m12-m12-cable.mdx ---
+
+---
+description: M12 X-coded to M12 X-coded cable for AutomatePro Ethernet.
+---
+# M12x to M12x Cable
+
+import M12x_M12x_Cable from './images/M12X-to-M12X.jpg'
+
+<div style={{ columnCount: 2, columnGap: '20px' }}>
+  <p>
+    <strong></strong><br />
+    | **Parameter**  | **Value**                |
+    |----------------|--------------------------|
+    | Part Number    | AMP-1006-X2M (Cable Length 2m +-0.15m)<br />AMP-1006-X3M (Cable Length 3m +-0.15m) |
+    | Connector 1    | M12 X-coded<br />IP67 Connector |
+    | Connector 2    | M12 X-coded<br />IP67 Connector |
+    | Cable Length   | 2m or 3m                 |
+    | Cable Type     | Cat5e                    |
+
+    <strong></strong><br />
+
+    <img src={M12x_M12x_Cable} style={{width: '100%'}}/>
+
+  </p>
+</div>
+
+
 # --- main-connector-crimp-kit.mdx ---
 
 ---
@@ -1407,8 +1467,8 @@ The development board is designed to be placed directly on top of the AutomatePr
     | Installation      | [Dev Breakout Board Mounting Instructions](../../manual/hardware-installation/breakout-board-mounting-instructions.mdx) |
     | Terminal Blocks   | Power<br />Digital-Ins<br />Digital-Outs<br />Digital-Drives<br />Analog-Inputs<br />Comms & Misc |
     | Power             | VBATT max 58 VDC<br />ACTU_PWR max 42 VDC / 25 A                           |
-    | I/O Broken Out    | 10x Digital In<br />12x Digital Out<br />24x Digital Drive<br />14x Analog In<br />E-STOP, warning lights, buzzer |
-    | Communications    | 2x CAN<br />1x RS485                                                      |
+    | I/O Broken Out    | 10x Digital In<br />12x Digital Out<br />12x Digital Drive half-bridges<br />14x Analog In<br />E-STOP, warning lights, buzzer |
+    | Communications    | 1x CAN<br />1x RS485                                                      |
     | Prototyping       | Connector A and B header footprints                                       |
 
     <strong></strong><br />
@@ -1454,6 +1514,8 @@ Registry access may require a Cloudsmith API key provided by Lemvos.
 
 The base `automatepro-installer` package depends on `automatepro-installer-wwan`, which installs the Quectel 5G connection manager.
 
+`/opt/automatepro/.env` is a configuration file of the package: when you have changed it and a new version ships a different one, the update asks what to do, and `N`, the default, keeps your file.
+
 ## Installation Prompts
 
 During installation, the package may ask configuration questions.
@@ -1480,7 +1542,9 @@ The main services are:
 | `automatepro-core-driver.service` | Starts the core ROS 2 driver container for GNSS, IMU, cameras, RTK correction clients, and the driver manager. |
 | `automatepro-foxglove-bridge.service` | Starts the host-side Foxglove Bridge on the configured bridge port. |
 | `automatepro-viz.service` | Runs the AutomatePro model and IMU transform publishers on the host for visualization. The base package enables and starts it. |
-| `automatepro-start-can0.service` | Brings the `can0` interface up at boot at 500 kbps. Stopping it takes `can0` down. |
+| `automatepro-start-can0.service` | Brings the `can0` interface up at boot with the `CAN0_*` values below, 500 kbps by default. Stopping it takes `can0` down. |
+| `automatepro-ros-log-monitor.timer` | Runs `automatepro-ros-log-monitor.service` 15 minutes after boot and then hourly. |
+| `automatepro-ros-log-monitor.service` | Removes the oldest ROS launch directories and node log files from `AUTOMATEPRO_LOG_DIR` while it uses more than `AUTOMATEPRO_LOG_MAX_BYTES`. It keeps files a process has open. |
 | `automatepro-wwan.service` | Runs the Quectel connection manager for the optional 5G modem. The `automatepro-installer-wwan` package enables and starts it; see [5G](/automatepro/manual/connectivity/5g). |
 
 For IO controller diagnostic topics and message fields, see [IO Controller](/automatepro/manual/diagnostics/io-controller).
@@ -1491,7 +1555,7 @@ Check the current status of all AutomatePro services:
 systemctl list-units --all 'automatepro-*'
 ```
 
-Healthy services show `active` and `running`. The one-shot setup services `automatepro-gmsl2`, `automatepro-gmsl2-reload`, and `automatepro-start-can0` show `exited`, `automatepro-gmsl2-ipc.path` shows `waiting`, and `automatepro-gmsl2-reactor` stays `inactive` until a camera recovery request.
+Healthy services show `active` and `running`. The one-shot setup services `automatepro-gmsl2`, `automatepro-gmsl2-reload`, and `automatepro-start-can0` show `exited`, `automatepro-gmsl2-ipc.path` shows `waiting`, and `automatepro-gmsl2-reactor` stays `inactive` until a camera recovery request. `automatepro-ros-log-monitor.timer` shows `waiting`, and `automatepro-ros-log-monitor` stays `inactive` between runs.
 
 ## Logs
 
@@ -1511,6 +1575,7 @@ Runtime configuration lives under `/opt/automatepro/config`. Packaged defaults l
 | `/opt/automatepro/config/ros/ntrip_params.yaml` | NTRIP correction client parameters. |
 | `/opt/automatepro/config/ros/spartn_params.yaml` | SPARTN correction client parameters. |
 | `/opt/automatepro/config/ros/driver_manager_params.yaml` | Driver manager parameters, including camera recovery. |
+| `/opt/automatepro/config/ros/core_driver_bringup_params.yaml` | Respawn delay of each core driver group. |
 | `/opt/automatepro/config/ros/foxglove_bridge_launch.xml` | Foxglove Bridge launch configuration used by `automatepro-foxglove-bridge.service`. |
 | `/opt/automatepro/defconfig/ros/` | Default copies installed by the package. |
 
@@ -1551,6 +1616,12 @@ Other values in `/opt/automatepro/.env`:
 | `XRCE_DOMAIN_ID_OVERRIDE` | `0` | ROS 2 domain ID the IO Agent uses for the IO controller topics. Keep it equal to `ROS_DOMAIN_ID`. |
 | `GMSL2_CAM_TYPE` | `SG3S-ISX031C-GMSL2F` | GMSL2 camera type. `SG3S-ISX031C-GMSL2F` uses the 3 Gbps link rate; `SG3S-ISX031C-GMSL2` does not. |
 | `NTRIP_USERNAME`, `NTRIP_PASSWORD` | not set | Credentials for the NTRIP correction client. |
+| `AUTOMATEPRO_LOG_MAX_BYTES` | not set | Disk usage in bytes of `AUTOMATEPRO_LOG_DIR` above which the log monitor removes the oldest ROS logs; 2 GiB when not set. |
+| `CAN0_BITRATE` | not set | `can0` bitrate in bit/s, 1 to 1000000; 500000 when not set. |
+| `CAN0_RESTART_MS` | not set | Delay in milliseconds before `can0` restarts after bus-off; 0, the default, turns automatic restart off. |
+| `CAN0_TXQUEUELEN` | not set | `can0` transmit queue length in frames; 1000 when not set. |
+
+A value outside its range makes `automatepro-start-can0.service` fail before it changes `can0`. Apply a change with `sudo systemctl restart automatepro-start-can0`.
 
 ## Change the ROS Domain ID
 
@@ -1681,7 +1752,7 @@ E-STOP is a hardware function: the `E_STOP` signal gates the digital-drive drive
 - **Release E-STOP**:
 
   ```bash
-  gpioset --mode=exit n_e_stop=1
+  sudo gpioset --mode=exit $(sudo gpiofind n_e_stop)=1
   ```
 
   `automatepro-io-agent.service` releases the software E-STOP each time it starts.
@@ -1689,7 +1760,7 @@ E-STOP is a hardware function: the `E_STOP` signal gates the digital-drive drive
 - **Read E-STOP status**:
 
   ```bash
-  gpioget n_e_stop-fb
+  sudo gpioget $(sudo gpiofind n_e_stop-fb)
   ```
 
   Returns `0` when the E-STOP is active (button pressed, digital drives disabled) and `1` when the E-STOP is released (digital drives enabled).
@@ -3499,7 +3570,7 @@ One CAN FD bus is integrated into AutomatePro with a max data rate of 8 Mbps.
 
 
 ## Software
-`automatepro-start-can0.service` brings `can0` up at boot at 500 kbps with a transmit queue of 1000 frames.
+`automatepro-start-can0.service` brings `can0` up at boot at 500 kbps with a transmit queue of 1000 frames. To change these, set `CAN0_BITRATE` and `CAN0_TXQUEUELEN` in `/opt/automatepro/.env`; see [Software Management](/automatepro/manual/misc/software-services).
 
 To use the network, configure the interface properties. For instance, to set the network interface with a bus bit rate of 500 kbps, use the following command:
 ```bash
@@ -4262,6 +4333,8 @@ AutomatePro has optional 5G connectivity. To use it, connect an external antenna
 ![AutomatePro 5G connector location](images/AutomatePro-5G.png)
 
 ### 5G Specifications
+AutomatePro ships with the Quectel RM520N-GL 5G module as standard. For applications that require a module from a non-Chinese manufacturer, the [Telit Cinterion FN990A28](#telit-cinterion-fn990a28-option) is available as an option.
+
 | Parameter               | Value                                                                                           |
 |-------------------------|-------------------------------------------------------------------------------------------------|
 | Transceiver             | RM520N-GL                                                                                       |
@@ -4276,6 +4349,21 @@ AutomatePro has optional 5G connectivity. To use it, connect an external antenna
 :::note
 The maximum upload and download rates are based on the manufacturer’s specifications for the 5G device. Actual performance may vary depending on the antenna used and the location of the device.
 :::
+
+### Telit Cinterion FN990A28 (Option)
+The Telit Cinterion FN990A28 is a 5G sub-6 GHz M.2 module based on the Qualcomm Snapdragon X62, and can be fitted in place of the standard RM520N-GL. It uses the same antenna connectors.
+
+| Parameter               | Value                                                                                           |
+|-------------------------|-------------------------------------------------------------------------------------------------|
+| Transceiver             | FN990A28-W06-T060100                                                                            |
+| Max upload data rates   | 460 Mbps (NSA) or 900 Mbps (SA)                                                                 |
+| Max download data rates | 3.4 Gbps (NSA) or 2.5 Gbps (SA)                                                                 |
+| Frequency               | sub-6 GHz                                                                                       |
+| Protocol                | 5G, LTE, WCDMA                                                                                  |
+| Coverage                | Worldwide 5G and LTE coverage                                                                   |
+| 5G Bands                | n1/n2/n3/n5/n7/n8/n12/n13/n14/n18/n20/n25/n26/n28/n29<br />/n30/n38/n40/n41/n48/n66/n71/n75/n76/n77/n78/n79 |
+
+The configuration and troubleshooting steps on this page are written for the standard RM520N-GL. If your AutomatePro is fitted with the FN990A28, contact Lemvos for the matching configuration.
 
 ### External Antenna
 The AutomatePro system is compatible with a variety of antennas. More information on compatible antennas can be found [here](/automatepro/category/antennas).
@@ -4607,8 +4695,8 @@ The arrows on the device indicate the IMU vector directions:
 | Topic | Type | Description |
 |-------|------|-------------|
 | `/sensor/imu/data` | [`sensor_msgs/msg/Imu`](https://docs.ros2.org/latest/api/sensor_msgs/msg/Imu.html) | Orientation, angular velocity, and linear acceleration. |
-| `/sensor/imu/magnetic_field` | [`sensor_msgs/msg/MagneticField`](https://docs.ros2.org/latest/api/sensor_msgs/msg/MagneticField.html) | Magnetic field data, when magnetometer publishing is enabled. |
-| `/sensor/imu/accuracy` | [`automatepro_imu_driver/msg/ImuAccuracy`](https://github.com/Lemvos/automatepro_imu_driver/blob/master/msg/ImuAccuracy.msg) | Accuracy levels for orientation, accelerometer, gyroscope, and magnetic-field reports. |
+| `/sensor/imu/magnetic_field` | [`sensor_msgs/msg/MagneticField`](https://docs.ros2.org/latest/api/sensor_msgs/msg/MagneticField.html) | Magnetic field data in tesla, when magnetometer publishing is enabled. |
+| `/sensor/imu/accuracy` | [`automatepro_imu_driver/msg/ImuAccuracy`](https://github.com/Lemvos/automatepro_imu_driver/blob/master/msg/ImuAccuracy.msg) | Accuracy levels for orientation, accelerometer, gyroscope, and magnetic-field reports, the active orientation source, and the heading accuracy in radians and degrees. The heading accuracy is NaN in `game_rotation_vector` mode. |
 
 ### Services
 
@@ -4625,7 +4713,7 @@ Run these checks from AutomatePro over SSH:
 ```bash
 source /opt/ros/humble/setup.bash
 ros2 node list | grep automatepro_imu_driver
-ros2 topic echo /sensor/imu/data --once --qos-reliability best_effort
+ros2 topic echo /sensor/imu/data --once
 ```
 
 If accuracy publishing is enabled, check calibration state:
@@ -4663,7 +4751,7 @@ Important parameters:
 
 | Parameter | Default | Description |
 |-----------|---------|-------------|
-| `log_level` | `info` | Driver log level. Launch accepts `debug`, `info`, `warn`, `error`, or `fatal`. |
+| `log_level` | `info` | Log level read by the driver package's own launch file, which accepts `debug`, `info`, `warn`, `error`, or `fatal`. The core driver does not apply it, so the IMU logs at `info`. |
 | `frame_id` | `lm450_imu_link` | Frame ID stamped on published IMU messages. |
 | `rotation_vector_mode` | `game_rotation_vector` | Orientation report type. Use `rotation_vector` for magnetic absolute heading, `game_rotation_vector` for relative heading without magnetometer, or `geomagnetic_rotation_vector` for geomagnetic heading. |
 | `tare.on_startup` | `false` | Applies one-shot tare when the node starts. Leave disabled after commissioning. |
@@ -4674,7 +4762,7 @@ Important parameters:
 | `tare.orientation.roll_deg/pitch_deg/yaw_deg` | `0.0/0.0/0.0` | Mounting orientation in degrees when `use_quaternion` is `false`. |
 | `tare.orientation.use_quaternion` | `false` | Uses `qx`, `qy`, `qz`, and `qw` instead of roll, pitch, and yaw when enabled. |
 | `tare.orientation.qx/qy/qz/qw` | `0/0/0/1` | Quaternion orientation mapping when `use_quaternion` is `true`. |
-| `calibration.accelerometer.enabled` | `false` | Enables BNO08x accelerometer dynamic calibration. |
+| `calibration.accelerometer.enabled` | `true` | Enables BNO08x accelerometer dynamic calibration. |
 | `calibration.accelerometer.planar` | `false` | Enables planar accelerometer calibration mode. |
 | `calibration.gyroscope.enabled` | `false` | Enables BNO08x gyroscope dynamic calibration. |
 | `calibration.gyroscope.on_table` | `false` | Enables stationary on-table gyroscope calibration assist. |
@@ -4688,10 +4776,17 @@ Important parameters:
 | `publish.accuracy.enabled` | `true` | Publishes `/sensor/imu/accuracy`. |
 | `publish.imu.enabled` | `true` | Publishes `/sensor/imu/data`. |
 | `publish.imu.rate` | `100` | Requested IMU report rate in Hz. |
-| `publish.magnetic_field.enabled` | `false` | Publishes `/sensor/imu/magnetic_field`. Use `--qos-reliability best_effort` when echoing this topic from the CLI. |
+| `publish.magnetic_field.enabled` | `false` | Publishes `/sensor/imu/magnetic_field`. |
 | `publish.magnetic_field.rate` | `100` | Requested magnetometer report rate in Hz. |
+| `publish.magnetic_field.covariance.stddev_tesla` | `1.4e-6` | Standard deviation of each magnetic field axis in tesla (1.4 uT), squared into the covariance of `/sensor/imu/magnetic_field`. |
 | `publish.imu.orientation_offset.enabled` | `false` | Applies a software quaternion offset before publishing orientation. |
 | `publish.imu.orientation_offset.qx/qy/qz/qw` | `0/0/0/1` | Software orientation offset quaternion. |
+| `publish.imu.covariance.game_rotation_vector.orientation_roll_pitch_stddev_rad` | `0.0436332` | Roll and pitch standard deviation in radians (2.5°) in `game_rotation_vector` mode. |
+| `publish.imu.covariance.game_rotation_vector.orientation_yaw_drift_radps` | `1.45444e-4` | Yaw drift rate in rad/s (0.5° per minute) in `game_rotation_vector` mode. The yaw variance grows with the time since the last sensor initialization. |
+| `publish.imu.covariance.rotation_vector.orientation_stddev_rad` | `0.0610865` | Orientation standard deviation in radians on every axis (3.5°) in `rotation_vector` mode. |
+| `publish.imu.covariance.geomagnetic_rotation_vector.orientation_stddev_rad` | `0.0785398` | Orientation standard deviation in radians on every axis (4.5°) in `geomagnetic_rotation_vector` mode. |
+| `publish.imu.covariance.angular_velocity_stddev_radps` | `0.0541052` | Angular velocity standard deviation per axis in rad/s (3.1° per second). |
+| `publish.imu.covariance.linear_acceleration_stddev_mps2` | `0.3` | Linear acceleration standard deviation per axis in m/s<sup>2</sup>. |
 
 :::warning[Important]
 Restart `automatepro-core-driver` after changing the configuration. Configuration values are loaded when the driver container starts and are only applied after the service restarts.
@@ -4726,7 +4821,7 @@ automatepro_imu_driver:
         qw: 1.0
     calibration:
       accelerometer:
-        enabled: false
+        enabled: true
         planar: false
       gyroscope:
         enabled: false
@@ -4747,6 +4842,8 @@ automatepro_imu_driver:
       magnetic_field:
         enabled: false
         rate: 100
+        covariance:
+          stddev_tesla: 1.4e-6
       imu:
         enabled: true
         rate: 100
@@ -4756,6 +4853,16 @@ automatepro_imu_driver:
           qy: 0.0
           qz: 0.0
           qw: 1.0
+        covariance:
+          game_rotation_vector:
+            orientation_roll_pitch_stddev_rad: 0.0436332
+            orientation_yaw_drift_radps: 1.45444e-4
+          rotation_vector:
+            orientation_stddev_rad: 0.0610865
+          geomagnetic_rotation_vector:
+            orientation_stddev_rad: 0.0785398
+          angular_velocity_stddev_radps: 0.0541052
+          linear_acceleration_stddev_mps2: 0.3
 ```
 
 ## Example
@@ -4902,7 +5009,7 @@ Perform tare and calibration only when the device is in its final mounting posit
 
 1. **Complete dynamic calibration.**
 
-   Dynamic calibration is off in the packaged configuration, because slow yaw turns during operation mis-calibrate the gyroscope. For a calibration session, set `calibration.accelerometer.enabled` and `calibration.gyroscope.enabled` to `true`, and `calibration.magnetic_field.enabled` only if magnetic heading is required, then restart the core driver.
+   Gyroscope dynamic calibration is off in the packaged configuration, because slow yaw turns during operation mis-calibrate the gyroscope, and magnetometer calibration is off because the game rotation vector does not use the magnetometer. Accelerometer dynamic calibration stays on. For a calibration session, set `calibration.gyroscope.enabled` to `true`, and `calibration.magnetic_field.enabled` only if magnetic heading is required, then restart the core driver.
 
    Move the device through several stable orientations for accelerometer calibration, leave it stationary for gyroscope calibration, and perform magnetic rotations only if magnetic-field calibration is enabled. Save the calibration:
 
@@ -4910,7 +5017,7 @@ Perform tare and calibration only when the device is in its final mounting posit
    ros2 service call /sensor/imu/save_calibration std_srvs/srv/Trigger
    ```
 
-   Set the calibration flags back to `false` and restart the core driver.
+   Set `calibration.gyroscope.enabled` and `calibration.magnetic_field.enabled` back to `false` and restart the core driver.
 
 2. **Tare the reference pose (optional).**
 
@@ -5217,12 +5324,14 @@ ROS_DRIVER_CAM_1=0
 ROS_DRIVER_CAM_2=0
 ```
 
-The same file sets the camera type with `GMSL2_CAM_TYPE`: `SG3S-ISX031C-GMSL2F`, the packaged default, uses the 3 Gbps link rate, and `SG3S-ISX031C-GMSL2` does not. `automatepro-gmsl2.service` reads it when it starts.
+The same file sets the camera type with `GMSL2_CAM_TYPE`: `SG3S-ISX031C-GMSL2F`, the packaged default, uses the 3 Gbps link rate, and `SG3S-ISX031C-GMSL2` does not. The camera type takes effect when the camera module loads: at boot, or when `automatepro-gmsl2-reload.service` reloads the module. The reload is skipped while any application holds a camera, so stop the core driver and any other camera application first.
 
 Apply the change:
 
 ```bash
-sudo systemctl restart automatepro-core-driver
+sudo systemctl stop automatepro-core-driver
+sudo systemctl restart automatepro-gmsl2-reload
+sudo systemctl start automatepro-core-driver
 ```
 
 Now you can use the cameras with any standard V4L2 driver, OpenCV, GStreamer, or another camera driver. For more details on hardware acceleration and GStreamer, see the NVIDIA Jetson [multimedia documentation](https://docs.nvidia.com/jetson/archives/r36.5/DeveloperGuide/SD/Multimedia.html).
@@ -5263,6 +5372,8 @@ sudo systemctl start automatepro-core-driver
 ### Automatic Recovery
 
 The camera driver includes a watchdog. If frames stop arriving, it first attempts driver-level recovery. If hardware-level recovery is required, the driver sets `recovery.reset_fail=true`; the AutomatePro Driver Manager watches that parameter and triggers GMSL2 restart through the AutomatePro IPC path and systemd services.
+
+A GMSL2 restart interrupts both cameras: they share one power rail, which the restart switches off and on, and the driver manager deactivates the other camera before the restart and reactivates it afterwards.
 
 Verify that the driver manager is running:
 
@@ -5475,8 +5586,8 @@ This is a non-standard option. Contact Lemvos for more information.
 |-------|------|-------------|
 | `/sensor/gnss/position/fix` | [`sensor_msgs/msg/NavSatFix`](https://docs.ros2.org/latest/api/sensor_msgs/msg/NavSatFix.html) | GNSS position data (navigation satellite fix). |
 | `/sensor/gnss/position/fix_velocity` | [`geometry_msgs/msg/`<br/>`TwistWithCovarianceStamped`](https://docs.ros2.org/latest/api/geometry_msgs/msg/TwistWithCovarianceStamped.html) | Velocity in local ENU frame. |
-| `/sensor/gnss/position/monhw` | [`ublox_msgs/msg/MonHW`](https://github.com/Lemvos/automatepro_gnss_driver/blob/ros2/ublox_msgs/msg/MonHW.msg) | Hardware status of the GNSS position module. |
-| `/sensor/gnss/position/monsys` | [`ublox_msgs/msg/MonSYS`](https://github.com/Lemvos/automatepro_gnss_driver/blob/ros2/ublox_msgs/msg/MonSYS.msg) | System monitor status of the GNSS position module. |
+| `/sensor/gnss/position/monhw` | [`ublox_msgs/msg/MonHW`](https://github.com/Lemvos/automatepro_gnss_driver/blob/master/ublox_msgs/msg/MonHW.msg) | Hardware status of the GNSS position module. |
+| `/sensor/gnss/position/monsys` | [`ublox_msgs/msg/MonSYS`](https://github.com/Lemvos/automatepro_gnss_driver/blob/master/ublox_msgs/msg/MonSYS.msg) | System monitor status of the GNSS position module. |
 | `/sensor/gnss/position/nmea` | [`nmea_msgs/msg/Sentence`](https://docs.ros.org/en/ros2_packages/humble/api/nmea_msgs/interfaces/msg/Sentence.html) | Raw NMEA messages. |
 | `/diagnostics` | [`diagnostic_msgs/msg/`<br/>`DiagnosticArray`](https://docs.ros2.org/latest/api/diagnostic_msgs/msg/DiagnosticArray.html) | GNSS position ROS driver diagnostics. |
 
@@ -5491,6 +5602,7 @@ This is a non-standard option. Contact Lemvos for more information.
 | `device` | string | `/dev/serial/by-id/usb-u-blox_AG_-_www.u-blox.com_u-blox_GNSS_receiver_F9P-if00` | `read` | Serial port for the F9P receiver. |
 | `frame_id` | string | `gnss_position` | `read` | Frame ID for published messages. |
 | `config_on_startup` | bool | `false` | `read` | Leaves receiver flash configuration unchanged at startup. |
+| `rate` | double | `1.0` | `read` | Navigation output rate in Hz that the fix diagnostic expects; it must equal the receiver's rate. |
 | `gpio.chipname` | string | `gpiochip0` | `read` | GPIO chip used for receiver reset recovery. |
 | `gpio.line_num` | int | `134` | `read` | GPIO line used for receiver reset recovery. |
 | `gpio.reset_time_s` | int | `1` | `read` | Reset pulse duration in seconds. |
@@ -5499,7 +5611,11 @@ This is a non-standard option. Contact Lemvos for more information.
 | `recovery.gpio_pulse_limit` | int | `3` | `read` | Consecutive pulses of the shared reset line before this node stops pulsing. A pulse resets both receivers. |
 | `watchdog.timeout_ms` | int | `3000` | `read` | Watchdog timeout in milliseconds. |
 | `watchdog.cycle_time_ms` | int | `500` | `read` | Watchdog check interval in milliseconds. |
-| `publish.all` | bool | `false` | `read` | Enables all publisher groups when true. |
+| `command_watchdog.enable` | bool | `true` | `read` | Polls the receiver with UBX-MON-VER to detect unanswered commands. It does not run recovery. |
+| `command_watchdog.period_s` | double | `30.0` | `read` | Poll interval in seconds; must be greater than 0. |
+| `command_watchdog.max_misses` | int | `3` | `read` | Consecutive unanswered polls before the "Receiver commands" diagnostic reports an error and the receiver input is flushed once; at least 1. |
+| `publish.all` | bool | `false` | `read` | Default for `publish.nav.all`, `publish.rxm.all`, `publish.aid.all`, and `publish.mon.all`. Keys set explicitly keep their values. |
+| `publish.nav.all` | bool | `false` | `read` | Default for the `publish.nav.*` keys. Keys set explicitly keep their values. |
 | `publish.aid.hui` | bool | `false` | `read` | Enables AID-HUI message publishing. |
 | `publish.nav.posllh` | bool | `false` | `read` | Enables NAV-POSLLH message publishing. |
 | `publish.nav.posecef` | bool | `false` | `read` | Enables NAV-POSECEF message publishing. |
@@ -5540,12 +5656,14 @@ automatepro_gnss_position_node:
   ros__parameters:
     debug: 0                    # Range 0-4 (0 means no debug statements will print)
 
-    device: /dev/serial/by-id/usb-u-blox_AG_-_www.u-blox.com_u-blox_GNSS_receiver_F9P-if00 #/dev/ttyACM1
+    device: /dev/serial/by-id/usb-u-blox_AG_-_www.u-blox.com_u-blox_GNSS_receiver_F9P-if00
     frame_id: gnss_position
 
     config_on_startup: false    # If false, the node will not override configurations of the device on startup
                                 # Device should be configured with u-center and configurations should be saved in flash
                                 # Please use the configuration file provided by Lemvos
+
+    rate: 1.0                   # [Hz] Must equal the receiver's navigation output rate
 
     # GPIO configuration
     gpio:
@@ -5563,6 +5681,12 @@ automatepro_gnss_position_node:
     watchdog:
       timeout_ms: 3000
       cycle_time_ms: 500
+
+    # Command watchdog configuration
+    command_watchdog:
+      enable: true
+      period_s: 30.0          # Poll period [s], > 0
+      max_misses: 3           # Consecutive unanswered polls before ERROR, >= 1
 
     # Enable u-blox gnss message publishers
     publish:
@@ -5603,12 +5727,12 @@ Recovery runs in three steps, the least invasive first:
 
 1. Reopen the serial connection, leaving the receiver untouched.
 2. Reset the receiver in software with a UBX `CFG-RST` hot start, which keeps the battery-backed data so re-acquisition is fast.
-3. Pulse the reset line to power-cycle the receiver.
+3. Pulse the hardware reset line. This is a cold start that clears the receiver's stored data.
 
 Each step ends by reopening the connection. The driver waits `recovery.cycle_time_s` between attempts and doubles the wait after each failed attempt, up to `recovery.backoff_max_s`.
 
 :::info
-The reset line is shared, so a pulse resets the position and the heading receiver together. Each node stops pulsing after `recovery.gpio_pulse_limit` consecutive pulses, counting the other node's pulses as well, and resumes only once data arrives again.
+The reset line is shared, so a pulse resets the position and the heading receiver together. Both lose their RTK fix and the heading until they re-converge, which takes minutes. Each node stops pulsing after `recovery.gpio_pulse_limit` consecutive pulses, counting the other node's pulses as well, and resumes only once data arrives again.
 :::
 
 ## Example
@@ -5753,10 +5877,16 @@ The AutomatePro offers an optional L-band RTK correction data receiver, which re
 | `port` | int | `2101/2102` | `read` | NTRIP server port. |
 | `mountpoint` | string | | `read` | Mountpoint to connect to. |
 | `fix_topic` | string | `/sensor/gnss/position/fix` | `read` | Topic whose position is sent to a VRS caster. |
-| `records_per_connection` | int | `10` (1-10000) | `read` | Records received before the connection is renewed to refresh the position sent to the caster. |
-| `reconnect_backoff_s` | double | `1.0` (0.1-60.0) | `read` | Delay in seconds after a failed connection attempt. |
+| `gga_refresh_interval_s` | double | `30.0` (`0` or ≥10) | `read` | Seconds after which the connection is ended between two RTCM 3 frames and renewed to refresh the position sent to the caster. `0` never renews it. |
+| `reconnect_backoff_s` | double | `1.0` (≥0.1) | `read` | Delay in seconds after the first failed connection attempt or a stream the caster closed. It doubles after each further failure, up to `reconnect_backoff_max_s`, and starts over once a connection delivers data. |
+| `reconnect_backoff_max_s` | double | `60.0` (≥ `reconnect_backoff_s`) | `read` | Longest delay in seconds between failed connection attempts. |
+| `reconnect_backoff_forbidden_max_s` | double | `600.0` | `read` | Longest delay in seconds after the caster answers 403 (forbidden). |
 
 The NTRIP client reads its login from `NTRIP_USERNAME` and `NTRIP_PASSWORD` in `/opt/automatepro/.env`, not from parameters.
+
+With neither variable set, the client connects without a login, for casters that need none. With only one of them set, it does not connect and logs an error.
+
+If the caster refuses the login (HTTP 401) or does not offer the mountpoint (HTTP 404, or its source table instead of data), the client stops connecting and logs `Streaming stopped` with the reason every 5 minutes. Correct the login or the mountpoint, then restart the core driver.
 
 #### SPARTN Client
 
@@ -5803,7 +5933,7 @@ automatepro_spartn_client:
     use_https: false
     host: "ppntrip.services.u-blox.com"
     port: 2101  # [http: 2101, https: 2102]
-    mountpoint: "EU" # [Europe: EU, United States: US, Australia: AU, Korea: KR]
+    mountpoint: "NEAR-SPARTN"  # From your PointPerfect credentials
     username: "username" # Your USERNAME
     password: "password" # Your PASSWORD
     gga_interval: 10
@@ -5833,11 +5963,11 @@ automatepro_ntrip_client:
     mountpoint: Prittlbach  # Add your mountpoint here
 ```
 
-The NTRIP client reads its credentials from `/opt/automatepro/.env`, not from the parameter file. Set them there:
+The NTRIP client reads its credentials from `/opt/automatepro/.env`, not from the parameter file. RTK2go requires a valid email address as the user name and accepts `none` as the password. Set them there, replacing `<email-address>` with your email address:
 
 ```text
-NTRIP_USERNAME=noname
-NTRIP_PASSWORD=password
+NTRIP_USERNAME=<email-address>
+NTRIP_PASSWORD=none
 ```
 
 
@@ -5888,7 +6018,7 @@ feature a blue FAKRA connector for antenna connection, with “GNSS-2” used fo
 | Connector               | GNSS-1 (FAKRA C - Signal Blue)                                                            |
 | Supported Constellation | GPS, Galileo, BeiDou, GLONASS                                                             |
 | Heading Accuracy        |  0.4° <sup>1</sup>    (with antenna spacing &gt;1m)                                                  |
-| Max Navigation Update Rate     | Default 1Hz (Can be configured up to 8Hz)                                                                                        |
+| Max Navigation Update Rate     | Default 1Hz (Can be configured up to 5Hz)                                                                                        |
 :::info[Info]
 <sup>1</sup> Depends on antennas and spacing between the two antennas. [See the datasheet for more information](https://content.u-blox.com/sites/default/files/ZED-F9H-01B_DataSheet_UBX-21025012.pdf).
 :::
@@ -5921,12 +6051,12 @@ import YawRoll from './images/YawRoll.png';
 
 | Topic | Type | Description |
 |-------|------|-------------|
-| `/sensor/gnss/heading/fix` | [`sensor_msgs/msg/NavSatFix`](https://docs.ros2.org/latest/api/sensor_msgs/msg/NavSatFix.html) | GNSS fix from the heading receiver. |
+| `/sensor/gnss/heading/fix` | [`sensor_msgs/msg/NavSatFix`](https://docs.ros2.org/latest/api/sensor_msgs/msg/NavSatFix.html) | Fix message from the heading receiver. The F9H outputs no position, so latitude, longitude, and altitude are `0`. |
 | `/sensor/gnss/heading/fix_velocity` | [`geometry_msgs/msg/`<br/>`TwistWithCovarianceStamped`](https://docs.ros2.org/latest/api/geometry_msgs/msg/TwistWithCovarianceStamped.html) | Velocity from the heading receiver. |
 | `/sensor/gnss/heading/true_heading` | [`sensor_msgs/msg/Imu`](https://docs.ros2.org/latest/api/sensor_msgs/msg/Imu.html) | Differential heading as an orientation quaternion with covariance. |
-| `/sensor/gnss/heading/navrelposned` | [`ublox_msgs/msg/NavRELPOSNED9`](https://github.com/Lemvos/automatepro_gnss_driver/blob/ros2/ublox_msgs/msg/NavRELPOSNED9.msg) | Detailed differential heading with additional information for calculating either roll or pitch. |
-| `/sensor/gnss/heading/monhw` | [`ublox_msgs/msg/MonHW`](https://github.com/Lemvos/automatepro_gnss_driver/blob/ros2/ublox_msgs/msg/MonHW.msg) | Hardware status of the GNSS heading module. |
-| `/sensor/gnss/heading/monsys` | [`ublox_msgs/msg/MonSYS`](https://github.com/Lemvos/automatepro_gnss_driver/blob/ros2/ublox_msgs/msg/MonSYS.msg) | System monitor status of the GNSS heading module. Published only when `publish.mon.sys` is `true`; the packaged configuration sets it to `false` because the F9H firmware rejects this message. |
+| `/sensor/gnss/heading/navrelposned` | [`ublox_msgs/msg/NavRELPOSNED9`](https://github.com/Lemvos/automatepro_gnss_driver/blob/master/ublox_msgs/msg/NavRELPOSNED9.msg) | Detailed differential heading with additional information for calculating either roll or pitch. |
+| `/sensor/gnss/heading/monhw` | [`ublox_msgs/msg/MonHW`](https://github.com/Lemvos/automatepro_gnss_driver/blob/master/ublox_msgs/msg/MonHW.msg) | Hardware status of the GNSS heading module. |
+| `/sensor/gnss/heading/monsys` | [`ublox_msgs/msg/MonSYS`](https://github.com/Lemvos/automatepro_gnss_driver/blob/master/ublox_msgs/msg/MonSYS.msg) | System monitor status of the GNSS heading module. Published only when `publish.mon.sys` is `true`; the packaged configuration sets it to `false` because the F9H firmware rejects this message. |
 | `/diagnostics` | [`diagnostic_msgs/msg/DiagnosticArray`](https://docs.ros2.org/latest/api/diagnostic_msgs/msg/DiagnosticArray.html) | GNSS heading ROS driver diagnostics. |
 
 :::tip[Topic for heading data]
@@ -5940,6 +6070,7 @@ It is recommended to use `/sensor/gnss/heading/true_heading` for your applicatio
 | `device` | string | `/dev/serial/by-id/usb-u-blox_AG_-_www.u-blox.com_u-blox_GNSS_receiver_F9H-if00` | `read` | Serial port for the F9H receiver. |
 | `frame_id` | string | `gnss_heading` | `read` | Frame ID for published messages. |
 | `config_on_startup` | bool | `false` | `read` | Leaves receiver flash configuration unchanged at startup. |
+| `rate` | double | `1.0` | `read` | Navigation output rate in Hz that the fix diagnostic expects; it must equal the receiver's rate. |
 | `gpio.chipname` | string | `gpiochip0` | `read` | GPIO chip used for receiver reset recovery. |
 | `gpio.line_num` | int | `134` | `read` | GPIO line used for receiver reset recovery. |
 | `gpio.reset_time_s` | int | `1` | `read` | Reset pulse duration in seconds. |
@@ -5948,7 +6079,10 @@ It is recommended to use `/sensor/gnss/heading/true_heading` for your applicatio
 | `recovery.gpio_pulse_limit` | int | `3` | `read` | Consecutive pulses of the shared reset line before this node stops pulsing. A pulse resets both receivers. |
 | `watchdog.timeout_ms` | int | `3000` | `read` | Watchdog timeout in milliseconds. |
 | `watchdog.cycle_time_ms` | int | `500` | `read` | Watchdog check interval in milliseconds. |
-| `publish.all` | bool | `false` | `read` | Enables all publisher groups when true. |
+| `command_watchdog.enable` | bool | `true` | `read` | Polls the receiver with UBX-MON-VER to detect unanswered commands. It does not run recovery. |
+| `command_watchdog.period_s` | double | `30.0` | `read` | Poll interval in seconds; must be greater than 0. |
+| `command_watchdog.max_misses` | int | `3` | `read` | Consecutive unanswered polls before the "Receiver commands" diagnostic reports an error and the receiver input is flushed once; at least 1. |
+| `publish.all` | bool | `false` | `read` | Default for `publish.nav.all`, `publish.rxm.all`, `publish.aid.all`, and `publish.mon.all`. Keys set explicitly keep their values. |
 | `publish.aid.hui` | bool | `false` | `read` | Enables AID-HUI message publishing. |
 | `publish.nav.relposned` | bool | `true` | `read` | Enables NavRELPOSNED9 publishing. |
 | `publish.nav.heading` | bool | `true` | `read` | Enables heading publishing on `/sensor/gnss/heading/true_heading`. |
@@ -5988,12 +6122,14 @@ automatepro_gnss_heading_node:
   ros__parameters:
     debug: 0                    # Range 0-4 (0 means no debug statements will print)
 
-    device: /dev/serial/by-id/usb-u-blox_AG_-_www.u-blox.com_u-blox_GNSS_receiver_F9H-if00 #/dev/ttyACM0
+    device: /dev/serial/by-id/usb-u-blox_AG_-_www.u-blox.com_u-blox_GNSS_receiver_F9H-if00
     frame_id: gnss_heading
 
     config_on_startup: false    # If false, the node will not override configurations of the device on startup
                                 # Device should be configured with u-center and configurations should be saved in flash
                                 # Please use the configuration file provided by Lemvos
+
+    rate: 1.0                   # [Hz] Must equal the receiver's navigation output rate
 
     # GPIO configuration
     gpio:
@@ -6011,6 +6147,12 @@ automatepro_gnss_heading_node:
     watchdog:
       timeout_ms: 3000
       cycle_time_ms: 500
+
+    # Command watchdog configuration
+    command_watchdog:
+      enable: true
+      period_s: 30.0          # Poll period [s], > 0
+      max_misses: 3           # Consecutive unanswered polls before ERROR, >= 1
 
     # Enable u-blox gnss message publishers
     publish:
@@ -6043,12 +6185,12 @@ Recovery runs in three steps, the least invasive first:
 
 1. Reopen the serial connection, leaving the receiver untouched.
 2. Reset the receiver in software with a UBX `CFG-RST` hot start, which keeps the battery-backed data so re-acquisition is fast.
-3. Pulse the reset line to power-cycle the receiver.
+3. Pulse the hardware reset line. This is a cold start that clears the receiver's stored data.
 
 Each step ends by reopening the connection. The driver waits `recovery.cycle_time_s` between attempts and doubles the wait after each failed attempt, up to `recovery.backoff_max_s`.
 
 :::info
-The reset line is shared, so a pulse resets the position and the heading receiver together. Each node stops pulsing after `recovery.gpio_pulse_limit` consecutive pulses, counting the other node's pulses as well, and resumes only once data arrives again.
+The reset line is shared, so a pulse resets the position and the heading receiver together. Both lose their RTK fix and the heading until they re-converge, which takes minutes. Each node stops pulsing after `recovery.gpio_pulse_limit` consecutive pulses, counting the other node's pulses as well, and resumes only once data arrives again.
 :::
 
 ## Example
@@ -6189,3 +6331,982 @@ import TabItem from '@theme/TabItem';
     ```
   </TabItem>
 </Tabs>
+
+
+# --- medium-usv.mdx ---
+
+---
+sidebar_position: 3
+description: Reference architecture for a medium USV using AutomatePro as the central compute, navigation and vehicle-control platform.
+toc_max_heading_level: 4
+draft: true
+---
+
+# Medium USV
+
+{/* One or two paragraphs: what the platform is, and which AutomatePro functions it uses. */}
+
+{/* Overview diagram: the highest-level picture, AutomatePro in the middle with the connected hardware around it. Cap square images at about 750px wide. */}
+
+## Overview
+
+### Features
+
+{/* Bullet list of what the platform supports. */}
+
+### Resources
+
+- [AutomatePro System Overview](../system-overview.mdx)
+- [Quick Start Guide](../quick-start-guide.mdx)
+- [Accessories](/automatepro/category/accessories)
+
+## Key System Specifications
+
+{/* Platform-level specs, not AutomatePro specs: type, size, propulsion, power, navigation, cameras, payload, communications, speed and endurance. */}
+
+| Parameter | Value |
+| --- | --- |
+| Platform type | TBD |
+
+## System Overview
+
+### Block Diagram
+
+{/* Architecture diagram: integrated AutomatePro functions inside the boundary, platform hardware outside. */}
+
+### AutomatePro Resources Used
+
+{/* Table of each AutomatePro interface: available, used, and what it is used for. Shows the spare capacity. */}
+
+{/* One ### section per subsystem: propulsion, payload, cameras, navigation and connectivity, power, software architecture, optional extensions. Use #### for detail within a subsystem. */}
+
+## System Components
+
+### Lemvos Products
+
+{/* Every Lemvos product used, with part number, quantity and role, each linked to its page. AutomatePro goes first. */}
+
+| Product | Part number | Qty | Role in this design |
+| --- | --- | --- | --- |
+
+### Third-Party Components
+
+{/* Every other component, described by type and requirement rather than by brand. */}
+
+| Component | Requirement | Qty |
+| --- | --- | --- |
+
+## Related Documentation
+
+
+# --- small-autonomous-survey-usv.mdx ---
+
+---
+sidebar_position: 2
+title: Small USV
+description: Reference architecture for a small twin-hull electric USV using AutomatePro as the central compute, navigation and vehicle-control platform.
+toc_max_heading_level: 4
+---
+
+# Small USV
+
+import SmallUSVExample from './images/small-usv-example.jpg';
+
+<figure style={{ float: 'right', width: '45%', maxWidth: '420px', margin: '0 0 12px 20px', textAlign: 'center' }}>
+  <img src={SmallUSVExample} alt="Example of a small twin-hull USV" style={{ width: '100%', height: 'auto', borderRadius: '12px' }} />
+  <figcaption style={{ fontSize: '0.8em' }}>Example small USV</figcaption>
+</figure>
+
+This reference design shows how **AutomatePro** can be used as the central compute, navigation and vehicle-control platform for a small electric USV. The example uses a twin-thruster catamaran with RTK positioning, two 196° GMSL2 cameras for 360° coverage, a marine radar, a deployable multibeam sonar, remote connectivity and basic vessel-management functions.
+
+The design is intentionally kept simple. It is intended to show a practical starting architecture rather than prescribe a specific hull, motor controller, radar or sensor manufacturer. Component ratings, protection and regulatory requirements should be verified for the final vessel.
+
+import ZoomableImage from '@site/src/components/ZoomableImage';
+import ZoomableDiagram from '@site/src/components/ZoomableDiagram';
+import USVReferenceSystem from './images/small-usv-reference-system.png';
+import USVReferenceArchitecture from './images/small-usv-reference-architecture.png';
+
+<div style={{ clear: 'both' }} />
+
+## Overview
+
+### Features
+
+The example vessel is intended to support:
+
+<div style={{ columnCount: 2, columnGap: '40px' }}>
+
+- Differential-thrust electric propulsion
+- Autonomous waypoint navigation and station keeping
+- RTK GNSS positioning
+- Differential GNSS heading (included in this example; optional on AutomatePro)
+- Full 360° camera coverage from two 196° GMSL2 cameras
+- Onboard segmentation and classification on the camera streams
+- 5G / Wi-Fi remote connectivity
+- Ethernet-connected marine radar
+- Multibeam sonar on a dedicated sonar PC
+- Powered sonar lift and deployment mechanism
+- Port and starboard bilge monitoring and pumping
+- Navigation lights
+- External emergency-stop circuit
+- 48 V nominal vessel power system (could also be a 24 V system)
+
+</div>
+
+The main objective is to minimize the number of separate compute, communications and I/O modules required in the vessel by using the functions already integrated into AutomatePro.
+
+<figure style={{ clear: 'both', textAlign: 'center', margin: '30px 0' }}>
+  <p style={{ fontWeight: 'bold', fontSize: '1.1em', marginBottom: '12px' }}>USV Compute and Control System Overview</p>
+  <ZoomableImage
+    src={USVReferenceSystem}
+    alt="USV compute and control system overview"
+    style={{ width: '90%', height: 'auto' }}
+  />
+  <figcaption style={{ fontSize: '0.85em' }}>Click the diagram to enlarge it.</figcaption>
+</figure>
+
+### Resources
+
+- [AutomatePro System Overview](../system-overview.mdx)
+- [Quick Start Guide](../quick-start-guide.mdx)
+- [Accessories](/automatepro/category/accessories)
+
+## Key System Specifications
+
+| Parameter | Value |
+| --- | --- |
+| Vessel type | Twin-hull electric catamaran |
+| Propulsion | 2 × electric thrusters with differential thrust, CAN motor controllers |
+| Power system | 48 V nominal battery, with the AutomatePro onboard 12 V and 5 V outputs for auxiliary loads |
+| Navigation | RTK GNSS, 9-axis IMU, differential GNSS heading |
+| Cameras | 2 × 196° GMSL2, forward and rear, for full 360° coverage |
+| Radar | Ethernet marine radar |
+| Survey payload | Multibeam sonar on a powered lift, run by a dedicated sonar PC |
+| Communications | 5G / 4G, Wi-Fi, and Bluetooth |
+| Vessel management | Port and starboard bilge monitoring and pumps, navigation lights, external E-STOP |
+
+## System Overview
+
+### Block Diagram
+
+The diagram shows the functions integrated into AutomatePro inside the blue boundary and the vessel hardware outside it.
+
+<figure style={{ textAlign: 'center', margin: '20px 0 30px 0' }}>
+  <ZoomableImage
+    src={USVReferenceArchitecture}
+    alt="Small USV reference architecture showing integrated AutomatePro functions and connected vessel hardware"
+    style={{ width: '100%', height: 'auto' }}
+  />
+  <figcaption style={{ fontSize: '0.85em' }}>Click the diagram to enlarge it.</figcaption>
+</figure>
+
+### AutomatePro Resources Used
+
+The table shows which AutomatePro interfaces this design uses and how many remain free for additions. Channel assignments can be changed in software and in the vessel harness. For the full product specification, see the [AutomatePro System Overview](../system-overview.mdx).
+
+| Interface | Available | Used | Used for |
+| --- | --- | --- | --- |
+| GMSL2 camera inputs | 2 | 2 | Forward and rear 196° cameras |
+| CAN | 1 | 1 | Port and starboard motor controllers |
+| 1GbE Ethernet | 1 | 1 | Marine radar |
+| RS485 | 1 | 0 | Spare |
+| Digital Drives | 12 half-bridges | 6 | Bilge pumps (2), navigation lights (2), sonar lift actuator as one full bridge (2) |
+| Digital Inputs | 10 | 4 | High-water switches (2), sonar lift limit switches (2) |
+| Digital Outputs | 12 | 0 | Spare |
+| Analog Inputs | 14 | 1 | Sonar lift position feedback |
+| E-STOP input | 1 | 1 | External E-STOP monitoring |
+| RTK GNSS and IMU | Integrated | Yes | Position and motion sensing |
+| Differential GNSS heading | Integrated | Yes | Heading, using the second GNSS antenna |
+| 5G, Wi-Fi and Bluetooth | Integrated | Yes | Remote link and local commissioning |
+| 12 V and 5 V outputs | 12 V 8 A, 5 V 3 A | Yes | 12 V to `ACTU_PWR` for the Digital Drives, plus sensors and electronics |
+
+### Propulsion
+
+The reference vessel uses two independently controlled electric thrusters, with each motor controller connected to AutomatePro via CANopen. Differential thrust provides both propulsion and yaw control without a separate rudder.
+
+See [CAN Bus](../manual/connectivity/can-bus.mdx) for wiring and interface configuration.
+
+#### Propulsion E-STOP
+
+The external E-STOP should be wired directly into the propulsion-controller safety or inhibit circuit where supported. The same E-STOP state can also be connected to AutomatePro so that software can monitor the vessel state.
+
+:::warning[Functional safety]
+The AutomatePro E-STOP connection is an input and is **not a safety-rated function**. It should not be used as the only safety mechanism for propulsion shutdown. Use the safety inputs and architecture required by the selected motor controllers and vessel risk assessment.
+:::
+
+When the AutomatePro E-STOP input is low, AutomatePro also disables its Digital Drive outputs. See [E-STOP](../manual/diagnostics/estop.mdx) and [Digital Drive Out](../manual/io/digital-drive-out.mdx).
+
+### Payload
+
+#### Multibeam Sonar
+
+The multibeam sonar runs on a dedicated sonar PC, keeping survey software separate from vessel control. AutomatePro controls deployment and retraction using the sonar lift.
+
+#### Sonar Lift
+
+A reversible linear actuator deploys and retracts the sonar. AutomatePro uses:
+
+- Digital Drive — actuator direction and speed
+- Digital Inputs — upper and lower limit switches
+- Analog Input — continuous position feedback
+
+The sonar is normally retracted during launch and transit, deployed for survey operations, and retracted before returning to transit mode.
+
+See [Analog Input](../manual/io/analog-in.mdx) for position feedback configuration.
+
+### Bilge System
+
+Each hull has a high-water switch and a bilge pump. The pump can be activated in two ways:
+
+- Automatically: the high-water switch directly activates the corresponding bilge pump
+- From AutomatePro: the control system can command the pump through a Digital Drive
+
+AutomatePro also monitors the high-water switches through Digital Inputs, allowing it to raise warnings and remote alarms.
+
+This means the bilge pumps can still respond directly to rising water, while remaining controllable and monitorable by the vessel software.
+
+If the pumps must remain operational during an E-STOP, the automatic bilge circuit should be independent of the AutomatePro Digital Drives.
+
+:::warning[Digital Drive supply]
+The onboard 12 V supply feeds `ACTU_PWR` for the sonar lift, bilge pumps and navigation lights. All connected 12 V loads share its 8 A limit, and each Digital Drive has a 5 A limit. Size the loads for simultaneous operation, including pump starting current and actuator stall current. If these limits cannot be met, use a suitably rated external 12 V supply and, where necessary, an external actuator drive.
+:::
+
+See [Digital Drive Out](../manual/io/digital-drive-out.mdx) for configuration.
+
+### Cameras and Perception
+
+The reference design uses two 196° GMSL2 cameras connected directly to AutomatePro, one facing forward and one aft. Together, they provide full 360° coverage for navigation, docking, situational awareness and remote operation.
+
+Mount the cameras with unobstructed views and overlapping coverage on both sides of the vessel.
+
+Segmentation and classification models can run directly on the NVIDIA Jetson in AutomatePro to detect vessels, buoys, obstacles and shoreline features onboard.
+
+GMSL2 provides a robust, low-latency connection with Power over Coax.
+
+See [GMSL2 Camera](../manual/sensors/gmsl2-camera.mdx).
+
+### Radar
+
+A marine radar connects directly to the AutomatePro 1GbE port and feeds the perception and collision-avoidance software on the Jetson, alongside the cameras. Check that the selected radar provides a Linux or ROS 2 driver.
+
+The AutomatePro Ethernet port does not provide PoE, so the radar needs its own power supply. See [Ethernet](../manual/connectivity/eth.mdx) for the network interface specification.
+
+### Position, Heading and Connectivity
+
+RTK GNSS, IMU, cellular and local wireless connectivity can be integrated directly in AutomatePro, reducing the number of separate modules that need to be packaged and wired in the vessel.
+
+For this reference design:
+
+- RTK GNSS provides global position for navigation.
+- The integrated IMU provides angular-rate and acceleration measurements.
+- This example includes the optional differential GNSS heading receiver and a second antenna, with at least 1 m separation between the GNSS antennas.
+- RTK correction data is received from a correction service over the cellular or Wi-Fi connection.
+- 5G provides the primary near-shore remote communications link where network coverage is available.
+- Wi-Fi provides local commissioning, service and short-range communications.
+
+Related documentation:
+
+- [GNSS Position](../manual/sensors/gnss/position.mdx)
+- [GNSS Heading](../manual/sensors/gnss/heading.mdx)
+- [RTK Correction](../manual/sensors/gnss/correction.mdx)
+- [5G](../manual/connectivity/5g.mdx)
+- [Wi-Fi](../manual/connectivity/wifi.mdx)
+
+### Power Architecture
+
+The reference vessel uses a **48 V nominal propulsion battery**.
+
+AutomatePro supports a wide DC input range; the current product documentation specifies a recommended supply range of **16–58 VDC**. The actual maximum charging voltage of the selected 48 V battery chemistry must therefore be checked against the AutomatePro input limits.
+
+A practical power arrangement is:
+
+| Rail | Typical loads |
+| --- | --- |
+| 48 V nominal propulsion bus | Propulsion controllers, main vessel power |
+| AutomatePro main input | Direct from vessel bus where the full battery voltage remains within specification |
+| AutomatePro onboard 12 V output, to `ACTU_PWR` | All Digital Drive loads: sonar lift actuator, bilge pumps and navigation lights, plus 12 V sensors and electronics, up to 8 A in total |
+| AutomatePro onboard 5 V output | 5 V sensors and electronics, up to 3 A |
+
+The onboard 12 V output can supply the auxiliary loads without a separate converter where the power budget permits. All Digital Drive loads and 12 V sensors share its 8 A limit. Check simultaneous loads, pump starting current and actuator stall current against this limit and the 5 A limit of each Digital Drive; use an external supply or drive where required.
+
+:::info[Diagram simplification]
+The system illustration intentionally omits fuses, contactors, DC/DC converters, isolation, distribution blocks and protective devices to keep the reference architecture readable. These must be sized and added for the final vessel design.
+:::
+
+### Software Architecture
+
+A simple ROS 2 software structure for this vessel could separate the system into the following main functions:
+
+<figure style={{ textAlign: 'center', margin: '20px 0 30px 0' }}>
+<ZoomableDiagram label="ROS 2 software architecture for the small USV">
+
+```mermaid
+flowchart TD
+    %% The borderless group keeps the camera and radar branches side by side.
+    subgraph PER [" "]
+        CAM[GMSL2 cameras] --> SEG[Segmentation and classification]
+        RADAR[Marine radar] --> RT[Radar target tracking]
+    end
+    GNSS[RTK GNSS] --> LOC[Sensor fusion localization]
+    IMU[IMU] --> LOC
+    ESTOP[E-STOP state] --> VM[Vessel Manager]
+    HW[High-water switches] --> VM
+    SEG --> FUS[Obstacle avoidance]
+    RT --> FUS
+    LOC --> FUS
+    LOC --> NAV[Navigation & Autonomy]
+    FUS --> NAV
+    OP[Mission / Remote Operator] --> NAV
+    VM -->|Alarms| OP
+    VM --> BILGE[Bilge pumps]
+    VM --> LIGHTS[Navigation lights]
+    VM --> DIAG[System diagnostics]
+    NAV --> VC[Vehicle Control]
+    VC --> CAN[CAN Motor Drivers]
+    CAN --> THR[Port / Starboard Thrusters]
+    NAV --> PM[Payload Manager]
+    PM --> LIFT[Sonar lift]
+    style PER fill:none,stroke:none
+```
+
+</ZoomableDiagram>
+  <figcaption style={{ fontSize: '0.85em' }}>Click the diagram to enlarge it.</figcaption>
+</figure>
+
+AutomatePro includes ROS 2 drivers for supported onboard sensors and I/O, allowing application software to interact with the system without implementing low-level hardware drivers from scratch.
+
+### Optional Extensions
+
+The architecture can be expanded without changing the basic system concept. Examples include:
+
+- LiDAR over Ethernet
+- AIS receiver
+- NMEA 2000 marine instruments over CAN
+- Serial sensors and instruments over RS485
+- Additional warning beacons or buzzers
+- Satcom, such as Starlink or Eutelsat OneWeb
+- DockMaster integration for autonomous docking and charging
+
+For larger vessels or higher-power auxiliaries, external contactors, motor drives and protected power-distribution modules should be used, with AutomatePro providing commands, sensing and supervisory control.
+
+To discuss any of these extensions or a higher-power configuration for your vessel, contact Lemvos.
+
+## System Components
+
+### Lemvos Products
+
+| Product | Part number | Qty | Role in this design |
+| --- | --- | --- | --- |
+| [AutomatePro](../system-overview.mdx) | AMP10-NO08-5G1-WIFI1-GMSLA-SSD1-RTKH-AIN1-NA | 1 | Central compute, navigation and vehicle control |
+| [Sony ISX031 GMSL2 Monocular Camera](../accessories/cameras/gmsl2-camera.mdx) | AMP-1003-196F | 2 | Forward and rear 196° cameras for 360° coverage |
+| [Camera Mount / Feed-Through / Shade](../accessories/cameras/camera-mount-feedthrough-shade.mdx) | AMP-1011 | 2 | Sealed camera mounting through the deck or hull |
+| [FAKRA Type Z Camera Cables](../accessories/cables-connectors/fakra-z-cables.mdx) | AMP-1007 | 2 | Camera connections to the GMSL2 inputs |
+| [7-in-1 Combination Antenna](../accessories/antennas/7in1-antenna.mdx) | AMP-1001-3M | 1 | 5G, Wi-Fi, Bluetooth and RTK GNSS positioning |
+| [RTK GNSS Antenna](../accessories/antennas/rtk-gnss-antenna.mdx) | AMP-1002-3M | 1 | Second GNSS antenna for differential heading |
+| [M12x to RJ45 Cable](../accessories/cables-connectors/m12-rj45-cable.mdx) | AMP-1006-2M | 1 | Ethernet connection to the marine radar |
+| [Main Connector and Crimp Kit](../accessories/cables-connectors/main-connector-crimp-kit.mdx) | AMP-1009 | 1 | Vessel wiring harness |
+
+### Third-Party Components
+
+Third-party components are described by type, so the design can be adapted to different vessel sizes and suppliers. Lemvos can help you narrow down and select suitable components for your application. Contact Lemvos to discuss your requirements.
+
+| Component | Requirement | Qty |
+| --- | --- | --- |
+| Motor controllers | CANopen electric motor controller | 2 |
+| Electric thrusters | Matched to the motor controllers | 2 |
+| Marine radar | Ethernet radar with a Linux or ROS 2 driver | 1 |
+| Bilge pumps | 12 V DC pump | 2 |
+| High-water switches | Float or solid-state level switch | 2 |
+| Navigation lights | 12 V LED, port and starboard | 2 |
+| Sonar lift actuator | 12 V reversible linear actuator | 1 |
+| Sonar lift limit switches | Upper and lower limit switch or proximity sensor | 2 |
+| Sonar lift position sensor | 0–10 V position transducer | 1 |
+| Multibeam sonar | Multibeam survey sonar | 1 |
+| Sonar PC | Dedicated computer running the sonar acquisition software | 1 |
+| Emergency stop | Latching external E-STOP, wired to the propulsion inhibit and the AutomatePro E-STOP input | 1 |
+| Vessel battery | 48 V nominal, with maximum charge voltage within the AutomatePro input range | 1 |
+
+## Related Documentation
+
+- [System Overview](../system-overview.mdx)
+- [Quick Start Guide](../quick-start-guide.mdx)
+- [CAN Bus](../manual/connectivity/can-bus.mdx)
+- [Ethernet](../manual/connectivity/eth.mdx)
+- [GMSL2 Camera](../manual/sensors/gmsl2-camera.mdx)
+- [Digital Drive Out](../manual/io/digital-drive-out.mdx)
+- [Digital Input](../manual/io/digital-in.mdx)
+- [Digital Output](../manual/io/digital-out.mdx)
+- [Analog Input](../manual/io/analog-in.mdx)
+- [E-STOP](../manual/diagnostics/estop.mdx)
+- [GNSS Position](../manual/sensors/gnss/position.mdx)
+- [GNSS Heading](../manual/sensors/gnss/heading.mdx)
+- [RTK Correction](../manual/sensors/gnss/correction.mdx)
+- [5G](../manual/connectivity/5g.mdx)
+
+
+# --- _reference-design-template.mdx ---
+
+{/* Reference design template. Copy this file to start a new reference design, and keep the headings
+   in this order so every design reads the same way. Files starting with an underscore are not published. */}
+
+---
+sidebar_position: 1
+description: One sentence describing the platform and how AutomatePro is used.
+toc_max_heading_level: 4
+---
+
+# Platform Name
+
+{/* One or two paragraphs: what the platform is, and which AutomatePro functions it uses. */}
+
+{/* Overview diagram: the highest-level picture, AutomatePro in the middle with the connected hardware around it. Cap square images at about 750px wide. */}
+
+## Overview
+
+### Features
+
+{/* Bullet list of what the platform supports. */}
+
+### Resources
+
+- [AutomatePro System Overview](../system-overview.mdx)
+- [Quick Start Guide](../quick-start-guide.mdx)
+- [Accessories](/automatepro/category/accessories)
+
+## Key System Specifications
+
+{/* Platform-level specs, not AutomatePro specs: type, size, propulsion, power, navigation, cameras, payload, communications, speed and endurance. */}
+
+| Parameter | Value |
+| --- | --- |
+| Platform type | TBD |
+
+## System Overview
+
+### Block Diagram
+
+{/* Architecture diagram: integrated AutomatePro functions inside the boundary, platform hardware outside. */}
+
+### AutomatePro Resources Used
+
+{/* Table of each AutomatePro interface: available, used, and what it is used for. Shows the spare capacity. */}
+
+{/* One ### section per subsystem: propulsion, payload, cameras, navigation and connectivity, power, software architecture, optional extensions. Use #### for detail within a subsystem. */}
+
+## System Components
+
+### Lemvos Products
+
+{/* Every Lemvos product used, with part number, quantity and role, each linked to its page. AutomatePro goes first. */}
+
+| Product | Part number | Qty | Role in this design |
+| --- | --- | --- | --- |
+
+### Third-Party Components
+
+{/* Every other component, described by type and requirement rather than by brand. End the intro sentence with the offer of Lemvos support for selecting components. */}
+
+| Component | Requirement | Qty |
+| --- | --- | --- |
+
+## Related Documentation
+
+
+# --- ugv.mdx ---
+
+---
+sidebar_position: 4
+title: UGV
+description: Reference architecture for a remotely operated electric UGV using AutomatePro as the central compute, navigation and vehicle-control platform, shown with an agricultural spraying payload.
+toc_max_heading_level: 4
+---
+
+# UGV
+
+import UGVExample from './images/ugv-example.jpg';
+
+<figure style={{ float: 'right', width: '45%', maxWidth: '420px', margin: '0 0 12px 20px', textAlign: 'center' }}>
+  <img src={UGVExample} alt="Example four-wheel UGV with LiDAR, GNSS antennas, beacon and a boom sprayer" style={{ width: '100%', height: 'auto', borderRadius: '12px' }} />
+  <figcaption style={{ fontSize: '0.8em' }}>Example UGV with a spraying payload</figcaption>
+</figure>
+
+This reference design shows how **AutomatePro** can be used as the central compute, navigation and vehicle-control platform for an electric unmanned ground vehicle (UGV). The example uses a four-wheel skid-steer vehicle with RTK positioning and wheel-tick dead reckoning, differential GNSS heading, two 196° GMSL2 cameras for 360° coverage and a 3D LiDAR. The vehicle is operated remotely over 5G from an operator station, with onboard autonomy and obstacle detection supporting the operator.
+
+To show how AutomatePro handles a working payload, the example vehicle carries an agricultural boom sprayer, with flow-based rate control, GNSS section control and wind monitoring all run by AutomatePro. The same approach applies to other payloads, such as mowing, inspection or material transport.
+
+The design is intentionally kept simple. It is intended to show a practical starting architecture rather than prescribe a specific chassis, motor controller, sprayer or sensor manufacturer. Component ratings, protection and regulatory requirements should be verified for the final vehicle.
+
+import ZoomableImage from '@site/src/components/ZoomableImage';
+import ZoomableDiagram from '@site/src/components/ZoomableDiagram';
+import UGVReferenceArchitecture from './images/ugv-reference-architecture.png';
+
+{/* System overview illustration still to come, matching the Small USV page. */}
+
+<div style={{ clear: 'both' }} />
+
+## Overview
+
+### Features
+
+The example vehicle is intended to support:
+
+<div style={{ columnCount: 2, columnGap: '40px' }}>
+
+- Four-wheel skid-steer electric drive
+- Remote operation over 5G with live camera video
+- Supervised autonomous spraying along planned paths
+- RTK GNSS positioning
+- GNSS dead reckoning from the wheel tick and direction inputs
+- Differential GNSS heading, available at standstill
+- Spray rate control from flow and ground speed
+- GNSS section control for five boom sections
+- Boom height control above the crop
+- Tank level and spray pressure monitoring
+- Wind monitoring to limit spray drift
+- Full 360° camera coverage from two 196° GMSL2 cameras
+- Onboard segmentation and classification on the camera streams
+- 3D LiDAR obstacle detection
+- E-STOP buttons, safety bumpers and link-loss stop
+- Warning beacon, remote-operation status light and buzzer
+- Front and rear work lights
+- 48 V nominal vehicle power system (could also be a 24 V system)
+
+</div>
+
+The main objective is to minimize the number of separate compute, communications and I/O modules required in the vehicle by using the functions already integrated into AutomatePro. In this design, AutomatePro also replaces a separate sprayer rate controller.
+
+### Resources
+
+- [AutomatePro System Overview](../system-overview.mdx)
+- [Quick Start Guide](../quick-start-guide.mdx)
+- [Accessories](/automatepro/category/accessories)
+
+## Key System Specifications
+
+| Parameter | Value |
+| --- | --- |
+| Vehicle type | Four-wheel skid-steer electric UGV with a boom sprayer |
+| Size | At least 1 m long, so the two GNSS antennas can be mounted 1 m or more apart |
+| Drive | 4 × electric wheel motors on 2 × dual-channel CANopen motor controllers |
+| Spray system | Tank, 24 V electric pump with flow-based rate control, boom with 5 sections and height control |
+| Power system | 48 V nominal battery with CAN BMS, a 24 V DC/DC converter for the Digital Drives and the pump, and the AutomatePro onboard 12 V and 5 V outputs for sensors |
+| Navigation | RTK GNSS with wheel tick dead reckoning, 9-axis IMU, differential GNSS heading |
+| Cameras | 2 × 196° GMSL2, forward and rear, for full 360° coverage |
+| LiDAR | 3D LiDAR over Ethernet |
+| Operation | Remote operation over 5G from an operator station; local driving over Wi-Fi |
+| Communications | 5G / 4G, Wi-Fi, and Bluetooth |
+| Safety and warning | E-STOP buttons, front and rear safety bumpers, link-loss stop, beacon, status light, buzzer |
+| Speed | Set by the drivetrain and the spray application; limit speed to suit stopping distance, video latency, sensor range and site rules |
+| Endurance | Set by battery capacity and tank volume; AutomatePro draws 10–200 W depending on the connected loads |
+
+## System Overview
+
+### Block Diagram
+
+The diagram shows the functions integrated into AutomatePro inside the blue boundary and the vehicle hardware outside it.
+
+<figure style={{ textAlign: 'center', margin: '20px 0 30px 0' }}>
+  <ZoomableImage
+    src={UGVReferenceArchitecture}
+    alt="UGV reference architecture showing integrated AutomatePro functions, connected vehicle and sprayer hardware, power distribution and the hardwired safety path"
+    style={{ width: '100%', height: 'auto' }}
+  />
+  <figcaption style={{ fontSize: '0.85em' }}>Click the diagram to enlarge it.</figcaption>
+</figure>
+
+### AutomatePro Resources Used
+
+The table shows which AutomatePro interfaces this design uses and how many remain free for additions. Channel assignments can be changed in software and in the vehicle harness. For the full product specification, see the [AutomatePro System Overview](../system-overview.mdx).
+
+| Interface | Available | Used | Used for |
+| --- | --- | --- | --- |
+| GMSL2 camera inputs | 2 | 2 | Forward and rear 196° cameras |
+| CAN | 1 | 1 | Motor controllers (2), battery BMS |
+| 1GbE Ethernet | 1 | 1 | 3D LiDAR |
+| RS485 | 1 | 1 | Wind speed and direction sensor |
+| Digital Drives | 12 half-bridges | 10 | Boom section valves (5), main spray valve (1), boom height actuator as one full bridge (2), front and rear work lights (2) |
+| Digital Inputs | 10 | 4 | Front and rear bumper status (2), boom limit switches (2) |
+| Digital Outputs | 12 | 1 | Pump speed, as a PWM signal to the pump driver |
+| Analog Inputs | 14 | 4 | Flow meter, spray pressure, tank level, boom height |
+| Warning outputs | 2 lights, 1 buzzer | 3 | Amber beacon, remote-operation status light, buzzer |
+| E-STOP input | 1 | 1 | E-STOP chain monitoring |
+| RTK GNSS and IMU | Integrated | Yes | Position and motion sensing |
+| Differential GNSS heading | Integrated | Yes | Heading, using the second GNSS antenna |
+| Wheel tick and direction inputs | Optional | Yes | Wheel speed and direction into the GNSS receiver for dead reckoning |
+| 5G, Wi-Fi and Bluetooth | Integrated | Yes | Remote operation link, local driving and commissioning |
+| 12 V and 5 V outputs | 12 V 8 A, 5 V 3 A | Yes | LiDAR, sensors and warning devices |
+
+### Drive System
+
+The reference vehicle uses four electric wheel motors in a skid-steer arrangement. Two dual-channel motor controllers each drive the front and rear motor on one side, and connect to AutomatePro via CANopen. Turning is done by driving the two sides at different speeds, so no steering actuator is needed.
+
+The motor controllers use the wheel motor encoders for speed control. Wheel speed for navigation goes to the dedicated AutomatePro wheel tick and direction inputs instead, as described in [Position, Heading and Connectivity](#position-heading-and-connectivity).
+
+See [CAN Bus](../manual/connectivity/can-bus.mdx) for wiring and interface configuration.
+
+#### Shared CAN Bus
+
+AutomatePro has one CAN bus, which this design shares between the two motor controllers and the battery BMS:
+
+- All devices must use the same bit rate. AutomatePro brings `can0` up at 500 kbps by default.
+- Every device needs a unique node ID, and the message IDs used by the BMS must not clash with the CANopen IDs of the motor controllers.
+- AutomatePro has an integrated 120 Ω termination resistor, so it should sit at one end of the bus, with a terminator at the other end.
+- Check the bus load from the motor controller process data and the BMS at their configured rates.
+
+#### E-STOP and Safe Torque Off
+
+The E-STOP buttons and the safety bumpers should act on the motor controllers' safe torque off (STO) inputs through a hardwired safety circuit, independent of AutomatePro and its software. Fit at least one E-STOP button on each side of the vehicle, so one can be reached from any direction. When people work next to the vehicle, for example during commissioning or tank filling, a safety-rated wireless E-STOP can be added to the same circuit.
+
+The state of the E-STOP chain is also wired to the AutomatePro E-STOP input so that software can monitor it, and each bumper reports its state to a Digital Input, for example through an auxiliary contact on its safety relay.
+
+:::warning[Functional safety]
+The AutomatePro E-STOP connection is an input and is **not a safety-rated function**. It should not be used as the only safety mechanism for stopping the drive or the sprayer. Design the safety functions to the risk assessment and the standards that apply to the application, such as ISO 13849-1 and ISO 18497 for highly automated agricultural machines, using the safety inputs of the selected motor controllers.
+:::
+
+When the AutomatePro E-STOP input is low, AutomatePro also disables its Digital Drive outputs. With normally closed valves, this closes the main valve and all boom sections, and stops the boom height actuator. The Digital Outputs are not disabled, so the E-STOP circuit must also act on the enable input of the pump driver. See [E-STOP](../manual/diagnostics/estop.mdx) and [Digital Drive Out](../manual/io/digital-drive-out.mdx).
+
+### Remote Operation
+
+The vehicle is normally driven by a remote operator, with no one on site. The operator station sends driving commands and spray missions to AutomatePro over 5G, and receives live video from the cameras, the vehicle position on a map, the spray status, and alarms. The GMSL2 camera driver already publishes H.264 compressed video, which keeps the video stream within the bandwidth of a cellular link.
+
+- **Link monitoring:** the operator station sends a heartbeat with its commands. If the heartbeat stops, for example because of a coverage gap, Vehicle Control stops the vehicle, the Spray Controller closes the main valve, and the Vehicle Manager raises an alarm.
+- **Hold-to-drive:** the operator holds a button or pedal to drive. Releasing it stops the vehicle.
+- **Assisted driving:** obstacle detection keeps running during remote driving, so the vehicle can slow down or stop for an obstacle the operator has not seen.
+- **Speed limits:** limit remote-driving speed to suit the video latency of the link, so the vehicle can stop within the distance the operator can see.
+- **Supervised autonomy:** the operator can hand over to autonomous path following for spraying passes, and take back control at any time.
+- **Local driving:** a gamepad or tablet connected over Wi-Fi can drive the vehicle on site, for example to load it onto a trailer, fill the tank or commission the vehicle.
+
+Vehicle Control selects one command source at a time, so remote, autonomous and local commands never drive the motors together. Check 5G coverage across the fields to be sprayed; satcom can be added where coverage is poor.
+
+:::warning[Remote stop]
+The stop command from the operator station passes through the network and the AutomatePro software, so it is **not a safety-rated function**. The E-STOP buttons, the safety bumpers and the link-loss stop must work without it. Where the risk assessment requires a safety-rated remote stop, use a dedicated safety-rated wireless system wired into the hardwired E-STOP circuit.
+:::
+
+### Spray System
+
+The sprayer consists of a tank, a 24 V electric pump, a main spray valve and a boom with five sections, each with its own valve and nozzles. AutomatePro measures flow, pressure, tank level and boom height on its Analog Inputs, drives the valves and the boom actuator from its Digital Drives, and sets the pump speed through the pump driver.
+
+#### Rate Control
+
+The Spray Controller keeps the application rate constant as the vehicle speed changes. It calculates the target flow from the application rate, the ground speed from GNSS and the width of the open boom sections:
+
+> Target flow (L/min) = application rate (L/ha) × speed (km/h) × open boom width (m) ÷ 600
+
+For example, 200 L/ha at 6 km/h over a 3 m boom needs 6 L/min. The controller compares the target with the flow meter reading and adjusts the pump speed, with a PWM signal from a Digital Output to the pump driver.
+
+The flow meter and the pressure sensor connect to Analog Inputs, using sensors with a 0–10 V output. Inputs for 4–20 mA sensors are available on request. The Analog Inputs sample at 33 Hz, which is enough for a rate-control loop running at a few hertz. The pressure reading is also used to detect blocked nozzles, an empty tank or a failed pump.
+
+See [Analog Input](../manual/io/analog-in.mdx) and [Digital Out](../manual/io/digital-out.mdx).
+
+#### Section Control
+
+Each boom section has a normally closed 24 V valve on a Digital Drive, behind a main spray valve on another Digital Drive. Using the RTK position and the boom geometry, the Spray Controller closes a section where it would overlap an area that is already sprayed, or cross into an area that must not be sprayed, such as a field edge, a buffer zone next to water, or a headland. It also records an as-applied map for the operator.
+
+The AutomatePro outputs have a software response time of up to 200 ms, and each valve needs time to open or close. At 6 km/h, 200 ms is about 33 cm of travel. The Spray Controller should therefore switch each section ahead of the boundary, by the measured output and valve delay at the current speed.
+
+Each Digital Drive supplies up to 5 A, which suits typical section valves. See [Digital Drive Out](../manual/io/digital-drive-out.mdx).
+
+#### Boom Height
+
+A reversible 24 V linear actuator raises and lowers the boom, and an ultrasonic sensor on the boom measures its height above the crop on an Analog Input. The Spray Controller holds the boom at the height the nozzles need, which keeps the spray pattern even and reduces drift. Upper and lower limit switches on Digital Inputs stop the actuator at the ends of its travel. The boom is raised for transit and on headland turns.
+
+#### Tank and Wind Monitoring
+
+A tank level sensor on an Analog Input lets the Spray Controller estimate the remaining sprayable area, and warn the operator before the tank runs empty. An ultrasonic wind sensor on the RS485 bus, typically using Modbus RTU, measures wind speed and direction. The Spray Controller pauses spraying and alerts the operator when the wind is above the limit set by the product label or local rules.
+
+See [RS485](../manual/connectivity/rs485.mdx).
+
+### Lighting and Warning
+
+AutomatePro has dedicated warning outputs for two lights and a buzzer:
+
+- Amber beacon — shows that the vehicle is powered and may move
+- Remote-operation status light — shows when the vehicle is being driven remotely or autonomously
+- Buzzer — sounds before the vehicle starts moving and before spraying starts
+
+The warning outputs switch their loads to ground and are suitable for 12 V devices supplied from the onboard 12 V output. See [Warning Systems](../manual/io/warning-systems.mdx).
+
+Front and rear LED work lights run from Digital Drives, so the software can switch them on for spraying at dusk or at night, when wind is often lower, and when the cameras need more light.
+
+### Cameras and Perception
+
+The reference design uses two 196° GMSL2 cameras connected directly to AutomatePro, one facing forward and one aft. Together, they give the remote operator a full 360° view, and provide the coverage for obstacle detection and recording.
+
+Mount the cameras high enough to see over the crop and the boom, with unobstructed views and overlapping coverage on both sides of the vehicle. For remote driving, include part of the vehicle in the forward view so the operator can judge clearances.
+
+Segmentation and classification models can run directly on the NVIDIA Jetson in AutomatePro to detect people, animals, vehicles, obstacles and crop rows onboard.
+
+GMSL2 provides a robust, low-latency connection with Power over Coax.
+
+See [GMSL2 Camera](../manual/sensors/gmsl2-camera.mdx).
+
+### LiDAR
+
+A 3D LiDAR connects directly to the AutomatePro 1GbE port. It gives accurate range to obstacles in all lighting conditions, and its detections are fused with the camera detections into the obstacle map used for navigation. Check that the selected LiDAR provides a Linux or ROS 2 driver, and mount it where spray mist and dirt are least likely to reach the window.
+
+The AutomatePro Ethernet port does not provide PoE, so the LiDAR needs its own power supply. It can be supplied from the onboard 12 V output when the power budget permits. Use the [M12x to RJ45 Cable](../accessories/cables-connectors/m12-rj45-cable.mdx) for a LiDAR with an RJ45 interface box, or the [M12x to M12x Cable](../accessories/cables-connectors/m12-m12-cable.mdx) for a LiDAR with an M12 X-coded connector.
+
+AutomatePro has one Ethernet port. To connect more Ethernet devices, such as a second LiDAR, add an IP67 Ethernet switch. See [Ethernet](../manual/connectivity/eth.mdx) for the network interface specification.
+
+### Position, Heading and Connectivity
+
+RTK GNSS, IMU, cellular and local wireless connectivity can be integrated directly in AutomatePro, reducing the number of separate modules that need to be packaged and wired in the vehicle.
+
+For this reference design:
+
+- RTK GNSS provides global position for navigation and section control.
+- The integrated IMU provides angular-rate and acceleration measurements.
+- Differential GNSS heading gives the vehicle's heading even when it is standing still, so the vehicle knows which way it faces before it starts moving. It also avoids relying on the magnetometer, which the drive motors and a steel chassis can disturb.
+- The two GNSS antennas are mounted at least 1 m apart, for example along the vehicle centerline, with a clear view of the sky and away from the LiDAR.
+- A wheel speed sensor connects to the AutomatePro wheel tick and direction inputs, which feed the RTK GNSS receiver directly. The receiver combines wheel speed with GNSS for dead reckoning, so it keeps a position estimate through short GNSS outages, for example under tree lines or next to buildings. Skid-steer wheels slip when turning, so dead-reckoning accuracy is lower in tight turns.
+- The wheel tick and direction inputs are a non-standard option that uses the u-blox F9R receiver. Contact Lemvos when ordering.
+- RTK correction data is received from a correction service over the cellular or Wi-Fi connection.
+- 5G provides the remote operation link, carrying commands, video and telemetry.
+- Wi-Fi provides local driving, commissioning and service.
+
+Related documentation:
+
+- [GNSS Position](../manual/sensors/gnss/position.mdx)
+- [GNSS Heading](../manual/sensors/gnss/heading.mdx)
+- [RTK Correction](../manual/sensors/gnss/correction.mdx)
+- [IMU](../manual/sensors/imu.mdx)
+- [5G](../manual/connectivity/5g.mdx)
+- [Wi-Fi](../manual/connectivity/wifi.mdx)
+
+### Power Architecture
+
+The reference vehicle uses a **48 V nominal battery** with a battery management system (BMS) that reports its state over CAN.
+
+AutomatePro accepts a recommended supply range of **15.5–58 VDC**, so the maximum charge voltage of the battery must stay within this range. For example, a 15-cell LiFePO4 pack (54.75 V maximum) or a 13-cell lithium-ion pack (54.6 V maximum) fits, but a 16-cell LiFePO4 pack (58.4 V maximum) exceeds the recommended range.
+
+A practical power arrangement is:
+
+| Rail | Typical loads |
+| --- | --- |
+| 48 V nominal drive bus | Motor controllers, through the main fuse and contactor |
+| AutomatePro main input | Direct from the 48 V bus, through its own fuse |
+| 24 V from a DC/DC converter | Spray pump through the pump driver, and `ACTU_PWR` for all Digital Drive loads: section valves, main valve, boom height actuator and work lights |
+| AutomatePro onboard 12 V output | LiDAR, warning devices, and 12 V sensors and electronics, up to 8 A in total |
+| AutomatePro onboard 5 V output | 5 V sensors and electronics, up to 3 A |
+
+The 48 V battery is above the recommended `ACTU_PWR` range of 7–42 V, so the Digital Drives get their own 24 V supply. Size the DC/DC converter for the pump, the valves, the boom actuator stall current and the work lights together, and keep each Digital Drive within its 5 A limit.
+
+:::info[Diagram simplification]
+The block diagram intentionally omits individual fuses, precharge circuits, isolation, distribution blocks and protective devices to keep the reference architecture readable. These must be sized and added for the final vehicle design.
+:::
+
+### Software Architecture
+
+A simple ROS 2 software structure for this vehicle could separate the system into the following main functions:
+
+<figure style={{ textAlign: 'center', margin: '20px 0 30px 0' }}>
+<ZoomableDiagram label="ROS 2 software architecture for the UGV">
+
+```mermaid
+flowchart TD
+    %% The dashed group keeps the wheel tick input beside the GNSS receiver it feeds,
+    %% and the borderless group keeps the camera and LiDAR branches side by side.
+    subgraph DR [GNSS dead reckoning]
+        direction LR
+        WT[Wheel tick and direction] --> GNSS[RTK GNSS receiver]
+    end
+    DR --> LOC[Localization]
+    HDG[GNSS heading] --> LOC
+    IMU[IMU] --> LOC
+    subgraph PER [" "]
+        CAM[GMSL2 cameras] --> SEG[Segmentation and classification]
+        LIDAR[3D LiDAR] --> LDET[LiDAR obstacle detection]
+    end
+    ESTOP[E-STOP state] --> VM[Vehicle Manager]
+    BUMP[Safety bumpers] --> VM
+    BMS[Battery state over CAN] --> VM
+    LINK[Operator link over 5G] --> VM
+    SEG --> FUS[Obstacle fusion and costmap]
+    LDET --> FUS
+    LOC --> FUS
+    LOC --> NAV[Navigation & Autonomy]
+    FUS --> NAV
+    OP[Remote Operator Station] --> NAV
+    VM -->|Alarms| OP
+    VM -->|Stop and speed limits| VC
+    VM --> WARN[Beacon, status light and buzzer]
+    VM --> LIGHTS[Work lights]
+    VM --> DIAG[System diagnostics]
+    NAV -->|Missions and spray rates| SC["Spray Controller<br/>reads flow, pressure,<br/>tank level and wind"]
+    SC --> PUMP[Pump rate control]
+    SC --> SEC[Section valves]
+    SC --> BOOM[Boom height]
+    NAV --> VC[Vehicle Control]
+    OP -->|Remote driving| VC
+    VC --> CAN[CAN Motor Controllers]
+    CAN --> MOT[Wheel motors]
+    style PER fill:none,stroke:none
+    style DR fill:none,stroke-dasharray:5 5
+```
+
+</ZoomableDiagram>
+  <figcaption style={{ fontSize: '0.85em' }}>Click the diagram to enlarge it.</figcaption>
+</figure>
+
+- **Localization** fuses the dead-reckoned RTK GNSS position, GNSS heading and IMU, for example with an extended Kalman filter.
+- **Obstacle fusion** combines the camera and LiDAR detections with the vehicle position into a costmap.
+- **Navigation & Autonomy** plans and follows spraying passes through the costmap, for example with Nav2, and passes the planned application rates to the Spray Controller.
+- **Spray Controller** runs rate control, section control and boom height control, pauses spraying in high wind, and records the as-applied map.
+- **Vehicle Control** turns velocity commands into left and right wheel speeds, selects between remote, autonomous and local commands, and stops the vehicle if the operator link is lost.
+- **Vehicle Manager** watches the E-STOP, bumpers, battery and operator link, limits speed or stops the vehicle when needed, drives the warning devices and raises alarms to the operator. It works alongside the hardwired safety circuit, not instead of it.
+
+AutomatePro includes ROS 2 drivers for supported onboard sensors and I/O, allowing application software to interact with the system without implementing low-level hardware drivers from scratch.
+
+### Optional Extensions
+
+The architecture can be expanded without changing the basic system concept. Examples include:
+
+- Camera-based spot spraying, with downward-facing cameras over the boom on Ethernet
+- Additional LiDARs or Ethernet cameras through an IP67 Ethernet switch
+- Individual nozzle control, using the spare Digital Drives and Digital Outputs or a CAN nozzle controller
+- Tank rinse and agitation control
+- Ultrasonic or radar proximity sensors over CAN
+- Higher compute options for heavier perception models
+- Satcom, such as Starlink or Eutelsat OneWeb
+- Docking, automatic charging and automatic tank filling
+- Safety-rated wireless E-STOP for on-site work
+
+For larger vehicles or higher-power sprayers, external contactors, motor drives and protected power-distribution modules should be used, with AutomatePro providing commands, sensing and supervisory control.
+
+To discuss any of these extensions or a higher-power configuration for your vehicle, contact Lemvos.
+
+## System Components
+
+### Lemvos Products
+
+| Product | Part number | Qty | Role in this design |
+| --- | --- | --- | --- |
+| [AutomatePro](../system-overview.mdx) | AMP10-NO08-5G1-WIFI1-GMSLA-SSD1-RTKH-AIN1-NA | 1 | Central compute, navigation, vehicle control and spray control; order with the wheel tick and direction option |
+| [Sony ISX031 GMSL2 Monocular Camera](../accessories/cameras/gmsl2-camera.mdx) | AMP-1003-196F | 2 | Forward and rear 196° cameras for 360° coverage |
+| [Camera Mount / Feed-Through / Shade](../accessories/cameras/camera-mount-feedthrough-shade.mdx) | AMP-1011 | 2 | Sealed camera mounting through the body panels |
+| [FAKRA Type Z Camera Cables](../accessories/cables-connectors/fakra-z-cables.mdx) | AMP-1007 | 2 | Camera connections to the GMSL2 inputs |
+| [7-in-1 Combination Antenna](../accessories/antennas/7in1-antenna.mdx) | AMP-1001-3M | 1 | 5G, Wi-Fi, Bluetooth and RTK GNSS positioning |
+| [RTK GNSS Antenna](../accessories/antennas/rtk-gnss-antenna.mdx) | AMP-1002-3M | 1 | Second GNSS antenna for differential heading |
+| [M12x to RJ45 Cable](../accessories/cables-connectors/m12-rj45-cable.mdx) | AMP-1006-2M | 1 | Ethernet connection to the LiDAR |
+| [Main Connector and Crimp Kit](../accessories/cables-connectors/main-connector-crimp-kit.mdx) | AMP-1009 | 1 | Vehicle wiring harness |
+
+### Third-Party Components
+
+Third-party components are described by type, so the design can be adapted to different vehicle sizes and suppliers. Lemvos can help you narrow down and select suitable components for your application. Contact Lemvos to discuss your requirements.
+
+| Component | Requirement | Qty |
+| --- | --- | --- |
+| Motor controllers | Dual-channel CANopen motor controller with encoder feedback and safe torque off input | 2 |
+| Wheel motors | Electric wheel motors with encoders, matched to the motor controllers | 4 |
+| Wheel speed sensor | Pulse output for wheel ticks and a direction signal, 5–24 V, for example from a wheel-mounted encoder | 1 |
+| Vehicle battery | 48 V nominal with CAN BMS, with maximum charge voltage within the AutomatePro input range | 1 |
+| Main fuse and contactor | Rated for the drive current, with precharge where the motor controllers need it | 1 |
+| DC/DC converter | 48 V to 24 V, rated for the pump and the Digital Drive loads | 1 |
+| 3D LiDAR | Ethernet LiDAR with a Linux or ROS 2 driver | 1 |
+| Emergency stop buttons | Latching E-STOP buttons, at least one on each side, wired to the safety circuit and the AutomatePro E-STOP input | 2 |
+| Safety bumpers | Front and rear safety edges with a safety relay acting on the motor controller STO inputs | 2 |
+| Operator station | PC with driving controls, video display and network access to the vehicle over 5G | 1 |
+| Spray tank | Sized to the vehicle payload, with fill, drain and agitation provisions | 1 |
+| Spray pump | 24 V electric diaphragm pump, rated for the required flow and pressure | 1 |
+| Pump driver | 24 V DC motor driver with a PWM speed input and an enable input wired to the E-STOP circuit | 1 |
+| Flow meter | 0–10 V output, or 4–20 mA with the matching AutomatePro input option | 1 |
+| Pressure sensor | 0–10 V output, rated for the spray line pressure | 1 |
+| Tank level sensor | 0–10 V output, hydrostatic or ultrasonic | 1 |
+| Main spray valve | 24 V normally closed valve, within the 5 A Digital Drive limit | 1 |
+| Boom section valves | 24 V normally closed valves, within the 5 A Digital Drive limit | 5 |
+| Spray boom | Boom with nozzles in 5 sections | 1 |
+| Boom height actuator | 24 V reversible linear actuator | 1 |
+| Boom limit switches | Upper and lower limit switch or proximity sensor | 2 |
+| Boom height sensor | Ultrasonic distance sensor with 0–10 V output | 1 |
+| Wind sensor | Ultrasonic wind speed and direction sensor with RS485 Modbus RTU | 1 |
+| Work lights | 24 V LED, front and rear | 2 |
+| Warning beacon | 12 V amber beacon | 1 |
+| Status light | 12 V light showing remote or autonomous operation | 1 |
+| Buzzer | 12 V warning buzzer | 1 |
+
+## Related Documentation
+
+- [System Overview](../system-overview.mdx)
+- [Quick Start Guide](../quick-start-guide.mdx)
+- [CAN Bus](../manual/connectivity/can-bus.mdx)
+- [RS485](../manual/connectivity/rs485.mdx)
+- [Ethernet](../manual/connectivity/eth.mdx)
+- [GMSL2 Camera](../manual/sensors/gmsl2-camera.mdx)
+- [Digital Drive Out](../manual/io/digital-drive-out.mdx)
+- [Digital Input](../manual/io/digital-in.mdx)
+- [Digital Output](../manual/io/digital-out.mdx)
+- [Analog Input](../manual/io/analog-in.mdx)
+- [Warning Systems](../manual/io/warning-systems.mdx)
+- [E-STOP](../manual/diagnostics/estop.mdx)
+- [GNSS Position](../manual/sensors/gnss/position.mdx)
+- [GNSS Heading](../manual/sensors/gnss/heading.mdx)
+- [RTK Correction](../manual/sensors/gnss/correction.mdx)
+- [IMU](../manual/sensors/imu.mdx)
+- [5G](../manual/connectivity/5g.mdx)
+- [Wi-Fi](../manual/connectivity/wifi.mdx)
+
+
+# --- micro-usv.mdx ---
+
+---
+sidebar_position: 1
+description: Reference architecture for a micro USV using AutomatePro as the central compute, navigation and vehicle-control platform.
+toc_max_heading_level: 4
+draft: true
+---
+
+# Micro USV
+
+{/* One or two paragraphs: what the platform is, and which AutomatePro functions it uses. */}
+
+{/* Overview diagram: the highest-level picture, AutomatePro in the middle with the connected hardware around it. Cap square images at about 750px wide. */}
+
+## Overview
+
+### Features
+
+{/* Bullet list of what the platform supports. */}
+
+### Resources
+
+- [AutomatePro System Overview](../system-overview.mdx)
+- [Quick Start Guide](../quick-start-guide.mdx)
+- [Accessories](/automatepro/category/accessories)
+
+## Key System Specifications
+
+{/* Platform-level specs, not AutomatePro specs: type, size, propulsion, power, navigation, cameras, payload, communications, speed and endurance. */}
+
+| Parameter | Value |
+| --- | --- |
+| Platform type | TBD |
+
+## System Overview
+
+### Block Diagram
+
+{/* Architecture diagram: integrated AutomatePro functions inside the boundary, platform hardware outside. */}
+
+### AutomatePro Resources Used
+
+{/* Table of each AutomatePro interface: available, used, and what it is used for. Shows the spare capacity. */}
+
+{/* One ### section per subsystem: propulsion, payload, cameras, navigation and connectivity, power, software architecture, optional extensions. Use #### for detail within a subsystem. */}
+
+## System Components
+
+### Lemvos Products
+
+{/* Every Lemvos product used, with part number, quantity and role, each linked to its page. AutomatePro goes first. */}
+
+| Product | Part number | Qty | Role in this design |
+| --- | --- | --- | --- |
+
+### Third-Party Components
+
+{/* Every other component, described by type and requirement rather than by brand. */}
+
+| Component | Requirement | Qty |
+| --- | --- | --- |
+
+## Related Documentation
